@@ -15,7 +15,6 @@ warnings.filterwarnings('ignore')
 # ---------------------------------------------------------
 st.set_page_config(page_title="Dubai Fusion Strategy & Crisis Model", layout="wide")
 
-# Brand Palette (Premium Dark Mode Aesthetic)
 GOLD = "#D4AF37"
 TEAL = "#006666"
 COPPER = "#B87333"
@@ -23,17 +22,15 @@ PLATINUM = "#E5E4E2"
 DARK_BG = "#111111"
 
 # ---------------------------------------------------------
-# 2. DATA GENERATION (Synthetic Dubai Fusion Survey Data)
+# 2. DATA GENERATION
 # ---------------------------------------------------------
 @st.cache_data
 def load_data():
     np.random.seed(42)
     n = 1000
-    
     areas = ['Downtown Dubai', 'Dubai Marina', 'Jumeirah', 'DIFC', 'Business Bay']
     cuisines_pool = ['Japanese', 'Peruvian', 'Levantine', 'Italian', 'Indian', 'Mexican']
     
-    # Generate Base Demographics
     data = {
         'Respondent_ID': range(1, n + 1),
         'Age': np.random.normal(loc=34, scale=8, size=n).astype(int),
@@ -43,40 +40,24 @@ def load_data():
         'Price_Increase15pct_VisitFreq_Change_Pct': np.random.normal(loc=-0.20, scale=0.1, size=n).clip(-1, 0)
     }
     df = pd.DataFrame(data)
-    
-    # Generate multi-select cuisines
-    df['Cuisines_Enjoyed'] = [
-        ", ".join(np.random.choice(cuisines_pool, np.random.randint(2, 5), replace=False)) 
-        for _ in range(n)
-    ]
-    
-    # Preprocessing & Binning
+    df['Cuisines_Enjoyed'] = [", ".join(np.random.choice(cuisines_pool, np.random.randint(2, 5), replace=False)) for _ in range(n)]
     df['Age'] = df['Age'].clip(18, 75)
     df['Age_Group'] = pd.cut(df['Age'], bins=[0, 25, 35, 45, 100], labels=['18-25', '26-35', '36-45', '46+'])
-    
     return df
 
 df_raw = load_data()
 
 # ---------------------------------------------------------
-# 3. GLOBAL SIDEBAR (Interactivity)
+# 3. GLOBAL SIDEBAR
 # ---------------------------------------------------------
 st.sidebar.header("Global Filters")
 st.sidebar.markdown("Use these controls to slice the strategic data.")
-
 min_age, max_age = int(df_raw['Age'].min()), int(df_raw['Age'].max())
 selected_age = st.sidebar.slider("Age Range", min_age, max_age, (20, 50))
-
 all_areas = df_raw['Area'].unique().tolist()
 selected_areas = st.sidebar.multiselect("Select Area(s)", all_areas, default=all_areas)
 
-# Apply Filters
-df = df_raw[
-    (df_raw['Age'] >= selected_age[0]) & 
-    (df_raw['Age'] <= selected_age[1]) & 
-    (df_raw['Area'].isin(selected_areas))
-]
-
+df = df_raw[(df_raw['Age'] >= selected_age[0]) & (df_raw['Age'] <= selected_age[1]) & (df_raw['Area'].isin(selected_areas))]
 if df.empty:
     st.error("No data available for the selected filters.")
     st.stop()
@@ -87,11 +68,11 @@ if df.empty:
 st.title("🍽️ Dubai Fusion Restaurant: Strategic Intelligence")
 
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "📊 Demographics & Menu Strategy", 
-    "🤖 ML & Persona Mining", 
+    "📊 Demographics & Menu", 
+    "🤖 ML & Personas", 
     "📈 Price Elasticity", 
-    "🚨 Pandemic Stress-Test",
-    "📑 Strategic Business Plan"
+    "🚨 Crisis Model",
+    "📑 Business Plan"
 ])
 
 # =========================================================
@@ -99,8 +80,6 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 # =========================================================
 with tab1:
     st.subheader("Audience Composition & Preferences")
-    
-    # Top-Level KPIs
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Total Sample Size", f"{len(df):,}")
     col2.metric("Avg Spend (AED)", f"AED {df['Spend (AED)'].mean():.2f}")
@@ -108,151 +87,68 @@ with tab1:
     col4.metric("Avg Age", f"{df['Age'].mean():.1f}")
     
     st.divider()
-    
-    # Charts Row 1
     c1, c2 = st.columns(2)
-    
     with c1:
-        fig_age = px.histogram(
-            df, x="Age", nbins=15, title="Age Distribution",
-            color_discrete_sequence=[TEAL], text_auto=True,
-            template="plotly_dark"
-        )
-        fig_age.update_layout(xaxis_title="Age", yaxis_title="Count")
+        fig_age = px.histogram(df, x="Age", nbins=15, title="Age Distribution", color_discrete_sequence=[TEAL], text_auto=True, template="plotly_dark")
         st.plotly_chart(fig_age, use_container_width=True)
-        
     with c2:
         area_counts = df['Area'].value_counts().reset_index()
         area_counts.columns = ['Area', 'Count']
-        fig_area = px.bar(
-            area_counts, x="Area", y="Count", title="Geographic Footprint",
-            color_discrete_sequence=[GOLD], text_auto=True,
-            template="plotly_dark"
-        )
-        fig_area.update_layout(xaxis_title="Area", yaxis_title="Count")
+        fig_area = px.bar(area_counts, x="Area", y="Count", title="Geographic Footprint", color_discrete_sequence=[GOLD], text_auto=True, template="plotly_dark")
         st.plotly_chart(fig_area, use_container_width=True)
 
-    # Charts Row 2: Exploded Cuisines
-    st.markdown("### Menu Strategy: Top Fusion Pairings")
     cuisines_exploded = df['Cuisines_Enjoyed'].str.split(', ').explode().value_counts().reset_index()
     cuisines_exploded.columns = ['Cuisine', 'Count']
-    
-    fig_cuisine = px.bar(
-        cuisines_exploded, x="Count", y="Cuisine", orientation='h',
-        title="Most Requested Culinary Influences",
-        color_discrete_sequence=[COPPER], text_auto=True,
-        template="plotly_dark"
-    )
-    fig_cuisine.update_layout(yaxis={'categoryorder':'total ascending'}, xaxis_title="Count", yaxis_title="Cuisine")
+    fig_cuisine = px.bar(cuisines_exploded, x="Count", y="Cuisine", orientation='h', title="Most Requested Culinary Influences", color_discrete_sequence=[COPPER], text_auto=True, template="plotly_dark")
+    fig_cuisine.update_layout(yaxis={'categoryorder':'total ascending'})
     st.plotly_chart(fig_cuisine, use_container_width=True)
-
 
 # =========================================================
 # TAB 2: Machine Learning & Persona Mining
 # =========================================================
 with tab2:
     st.subheader("Algorithmic Persona Generation")
-    
-    # 1. Association Rules (Apriori)
-    st.markdown("### 🛒 Association Rules (Menu & Demographic Synergies)")
-    
-    ohe_demo = pd.get_dummies(df[['Area', 'Age_Group']])
-    ohe_cuisines = df['Cuisines_Enjoyed'].str.get_dummies(sep=', ')
-    basket = pd.concat([ohe_demo, ohe_cuisines], axis=1).astype(bool)
-    
-    frequent_itemsets = apriori(basket, min_support=0.1, use_colnames=True)
-    if not frequent_itemsets.empty:
-        rules = association_rules(frequent_itemsets, metric="lift", min_threshold=1.2)
-        if not rules.empty:
-            rules['antecedents'] = rules['antecedents'].apply(lambda x: ', '.join(list(x)))
-            rules['consequents'] = rules['consequents'].apply(lambda x: ', '.join(list(x)))
-            rules = rules.sort_values('lift', ascending=False).head(10)
-            
-            display_rules = rules[['antecedents', 'consequents', 'support', 'confidence', 'lift']]
-            st.dataframe(display_rules.style.format({'support': '{:.2f}', 'confidence': '{:.2f}', 'lift': '{:.2f}'}), use_container_width=True)
-        else:
-            st.info("No strong association rules found with lift > 1.2.")
-    else:
-        st.info("Not enough data to calculate support thresholds.")
-        
-    st.divider()
-    
-    # 2. K-Means Clustering
-    st.markdown("### 🧬 Customer Segmentation (K-Means)")
-    
     features = ['Spend (AED)', 'Visit_Freq_Monthly', 'Age']
     X = df[features].dropna()
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
-    
     kmeans = KMeans(n_clusters=3, random_state=42)
     df.loc[X.index, 'Cluster'] = kmeans.fit_predict(X_scaled)
     df['Cluster_Name'] = df['Cluster'].map({0: 'Value Regulars', 1: 'High-Roller Foodies', 2: 'Infrequent Explorers'})
     
-    fig_cluster = px.scatter_3d(
-        df, x='Age', y='Spend (AED)', z='Visit_Freq_Monthly',
-        color='Cluster_Name', color_discrete_sequence=[GOLD, TEAL, PLATINUM],
-        title="3D Behavioral Topography", template="plotly_dark",
-        opacity=0.7
-    )
+    fig_cluster = px.scatter_3d(df, x='Age', y='Spend (AED)', z='Visit_Freq_Monthly', color='Cluster_Name', color_discrete_sequence=[GOLD, TEAL, PLATINUM], title="3D Behavioral Topography", template="plotly_dark", opacity=0.7)
     st.plotly_chart(fig_cluster, use_container_width=True)
     
-    # --- REDESIGNED PERSONA CARDS ---
     st.markdown("#### Persona Synthesis")
-    
-    # Standard String for CSS 
-    persona_css = """
-    <style>
-        .persona-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 10px; }
-        .persona-card { background-color: #111111; padding: 20px; border-radius: 10px; box-shadow: inset 0 0 10px rgba(255,255,255,0.05); }
-        .persona-card h4 { margin-top: 0; font-weight: 900; font-size: 1.2em; text-transform: uppercase; }
-        .persona-stats { font-size: 0.95em; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #333; color: #E5E4E2; }
-        .persona-stats b { color: white; }
-        .persona-body { font-size: 0.95em; line-height: 1.5; color: #E5E4E2; }
-        .p-teal { border: 2px solid #006666; } .p-teal h4 { color: #006666; } .p-teal strong { color: #006666; }
-        .p-gold { border: 2px solid #D4AF37; } .p-gold h4 { color: #D4AF37; } .p-gold strong { color: #D4AF37; }
-        .p-plat { border: 2px solid #E5E4E2; } .p-plat h4 { color: #E5E4E2; } .p-plat strong { color: #E5E4E2; }
-    </style>
-    """
-    
-    persona_html = '<div class="persona-grid">'
     cluster_means = df.groupby('Cluster_Name')[features].mean()
     
+    # Error-Proof Inline HTML for Personas
+    p_html = f"""<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">"""
     for c_name, row in cluster_means.iterrows():
         if c_name == 'Value Regulars':
-            c_class = "p-teal"
-            desc = "Consistent baseline revenue. They visit frequently but manage their check size carefully."
+            color, icon, desc = TEAL, "👥", "Consistent baseline revenue. They visit frequently but manage their check size carefully."
         elif c_name == 'High-Roller Foodies':
-            c_class = "p-gold"
-            desc = "The profit engines. Older demographic, highly inelastic to price, order premium fusion items."
+            color, icon, desc = GOLD, "💎", "The profit engines. Older demographic, highly inelastic to price, order premium fusion items."
         else:
-            c_class = "p-plat"
-            desc = "Curiosity-driven visitors. They come in once a month for the 'experience' but aren't anchored to the brand."
-            
-        # Formatted string with no blank lines
-        persona_html += f"""<div class="persona-card {c_class}"><h4>{c_name}</h4><div class="persona-stats"><div><b>Avg Age:</b> {int(row['Age'])}</div><div><b>Avg Spend:</b> AED {int(row['Spend (AED)'])}</div><div><b>Visits/Mo:</b> {row['Visit_Freq_Monthly']:.1f}</div></div><div class="persona-body"><strong>Strategic Takeaway:</strong><br>{desc}</div></div>"""
+            color, icon, desc = PLATINUM, "🧭", "Curiosity-driven visitors. They come in once a month for the 'experience'."
         
-    persona_html += '</div>'
-    
-    st.markdown(persona_css + persona_html, unsafe_allow_html=True)
+        p_html += f"""<div style="background:#111; border:2px solid {color}; border-radius:10px; padding:20px;">"""
+        p_html += f"""<div style="display:flex; align-items:center; gap:10px; margin-bottom:15px; border-bottom:1px solid #333; padding-bottom:10px;"><div style="font-size:30px;">{icon}</div><h4 style="color:{color}; margin:0; font-weight:900; text-transform:uppercase;">{c_name}</h4></div>"""
+        p_html += f"""<div style="color:#ccc; font-size:0.95em; line-height:1.5;"><p><b>Avg Age:</b> {int(row['Age'])}</p><p><b>Avg Spend:</b> AED {int(row['Spend (AED)'])}</p><p><b>Visits/Mo:</b> {row['Visit_Freq_Monthly']:.1f}</p><p><strong style="color:{color};">Takeaway:</strong> {desc}</p></div></div>"""
+    p_html += "</div>"
+    st.markdown(p_html, unsafe_allow_html=True)
 
 # =========================================================
-# TAB 3: Standard Price Elasticity (What-If Analysis)
+# TAB 3: Standard Price Elasticity
 # =========================================================
 with tab3:
     st.subheader("Price Elasticity & Revenue Modeling")
-    
     price_increase = st.slider("Proposed Menu Price Increase (%)", min_value=0, max_value=30, value=15, step=1)
-    
-    # Calculate baseline and new revenue
     total_monthly_visits = df['Visit_Freq_Monthly'].sum()
     base_avg_spend = df['Spend (AED)'].mean()
     base_revenue = total_monthly_visits * base_avg_spend
-    
-    # Calculate weighted drop-off based on survey data
     avg_drop_off_15pct = df['Price_Increase15pct_VisitFreq_Change_Pct'].mean() 
     scaled_drop_off = (price_increase / 15.0) * avg_drop_off_15pct 
-    
     new_visits = total_monthly_visits * (1 + scaled_drop_off)
     new_spend = base_avg_spend * (1 + (price_increase/100))
     new_revenue = new_visits * new_spend
@@ -263,34 +159,16 @@ with tab3:
     col_b.metric("Projected Monthly Revenue", f"AED {new_revenue:,.0f}", f"{revenue_delta:,.0f} AED")
     col_c.metric("Projected Visit Drop-off", f"{abs(scaled_drop_off)*100:.1f}%", delta_color="inverse")
     
-    # Waterfall Chart
-    fig_waterfall = go.Figure(go.Waterfall(
-        name="Revenue Impact", orientation="v",
-        measure=["absolute", "relative", "relative", "total"],
-        x=["Base Revenue", "Price Increase Gain", "Volume Loss (Elasticity)", "Adjusted Revenue"],
-        textposition="outside",
-        text=[f"AED {base_revenue/1000:.0f}k", f"+AED {(total_monthly_visits * base_avg_spend * (price_increase/100))/1000:.0f}k", 
-              f"-AED {abs(new_revenue - (base_revenue * (1+(price_increase/100))))/1000:.0f}k", f"AED {new_revenue/1000:.0f}k"],
-        y=[base_revenue, 
-           total_monthly_visits * base_avg_spend * (price_increase/100), 
-           new_revenue - (base_revenue * (1+(price_increase/100))), 
-           new_revenue],
-        connector={"line": {"color": "rgb(63, 63, 63)"}},
-        increasing={"marker": {"color": GOLD}},
-        decreasing={"marker": {"color": COPPER}},
-        totals={"marker": {"color": TEAL}}
-    ))
-    
+    fig_waterfall = go.Figure(go.Waterfall(name="Revenue Impact", orientation="v", measure=["absolute", "relative", "relative", "total"], x=["Base Revenue", "Price Increase Gain", "Volume Loss", "Adjusted Revenue"], y=[base_revenue, total_monthly_visits * base_avg_spend * (price_increase/100), new_revenue - (base_revenue * (1+(price_increase/100))), new_revenue], connector={"line": {"color": "rgb(63, 63, 63)"}}, increasing={"marker": {"color": GOLD}}, decreasing={"marker": {"color": COPPER}}, totals={"marker": {"color": TEAL}}))
     fig_waterfall.update_layout(title="Net Revenue Waterfall Analysis", template="plotly_dark")
     st.plotly_chart(fig_waterfall, use_container_width=True)
-
 
 # =========================================================
 # TAB 4: Pandemic Stress-Test (6-Month Crisis Model)
 # =========================================================
 with tab4:
     st.subheader("Financial Contagion & Survival Stress-Test")
-    st.markdown("Model a severe 6-month operational disruption. Adjust the parameters below to determine survivability.")
+    st.markdown("Model a severe 6-month operational disruption.")
     
     CASH_RESERVES = 750000 
     FIXED_COSTS = 120000 
@@ -312,71 +190,53 @@ with tab4:
     
     cogs_pct = 0.30 * supply_mult
     variable_costs = (new_dine_in_rev + gross_delivery_rev) * cogs_pct 
-    
     monthly_burn = (FIXED_COSTS + variable_costs) - total_rev
-    cash_runway = CASH_RESERVES / monthly_burn if monthly_burn > 0 else float('inf')
     
     delivery_margin_per_order = BASE_AOV * (1 - cogs_pct - (del_fee / 100.0))
     bep_delivery_orders = FIXED_COSTS / delivery_margin_per_order if delivery_margin_per_order > 0 else float('inf')
     
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Monthly Burn Rate", f"AED {monthly_burn:,.0f}" if monthly_burn > 0 else "Profitable")
-    c2.metric("Cash Runway", f"{cash_runway:.1f} Months" if monthly_burn > 0 else "Infinite")
-    c3.metric("Delivery Break-Even", f"{bep_delivery_orders:,.0f} Orders/Mo" if bep_delivery_orders != float('inf') else "Unachievable")
-    
-    st.markdown("### Monthly Crisis Cash Flow")
-    fig_cf = go.Figure(go.Waterfall(
-        name="Cash Flow", orientation="v",
-        measure=["relative", "relative", "relative", "relative", "total"],
-        x=["New Dine-In Rev", "Net Delivery Rev", "Fixed Costs", "Variable Costs (COGS)", "Net Monthly Cash Flow"],
-        text=[f"AED {new_dine_in_rev/1000:.0f}k", f"AED {net_delivery_rev/1000:.0f}k", 
-              f"-AED {FIXED_COSTS/1000:.0f}k", f"-AED {variable_costs/1000:.0f}k", f"AED {-monthly_burn/1000:.0f}k"],
-        y=[new_dine_in_rev, net_delivery_rev, -FIXED_COSTS, -variable_costs, -monthly_burn],
-        textposition="outside",
-        connector={"line": {"color": PLATINUM}},
-        increasing={"marker": {"color": TEAL}},
-        decreasing={"marker": {"color": COPPER}},
-        totals={"marker": {"color": GOLD if monthly_burn <= 0 else "#8B0000"}}
-    ))
+    fig_cf = go.Figure(go.Waterfall(name="Cash Flow", orientation="v", measure=["relative", "relative", "relative", "relative", "total"], x=["New Dine-In Rev", "Net Delivery Rev", "Fixed Costs", "Variable Costs (COGS)", "Net Monthly Cash Flow"], y=[new_dine_in_rev, net_delivery_rev, -FIXED_COSTS, -variable_costs, -monthly_burn], connector={"line": {"color": PLATINUM}}, increasing={"marker": {"color": TEAL}}, decreasing={"marker": {"color": COPPER}}, totals={"marker": {"color": GOLD if monthly_burn <= 0 else "#8B0000"}}))
     fig_cf.update_layout(template="plotly_dark")
     st.plotly_chart(fig_cf, use_container_width=True)
-    
-    st.markdown("### 6-Month Liquidity Depletion Curve")
-    months = [f"Month {i}" for i in range(7)]
-    runway_data = [CASH_RESERVES - (max(monthly_burn, 0) * i) for i in range(7)]
-    
-    fig_runway = px.line(
-        x=months, y=runway_data, markers=True, text=[f"{val/1000:.0f}k" for val in runway_data],
-        title="Cash Reserves Trajectory", template="plotly_dark"
-    )
-    fig_runway.update_traces(line_color=COPPER, textposition="top center")
-    fig_runway.add_hline(y=0, line_dash="dash", line_color="red", annotation_text="Bankruptcy Line")
-    fig_runway.update_layout(xaxis_title="Timeline", yaxis_title="Cash Balance (AED)")
-    st.plotly_chart(fig_runway, use_container_width=True)
 
-    # --- REDESIGNED CONTINGENCY CARDS ---
-    st.divider()
-    st.markdown("### Strategic Contingency Imperatives 🔗")
-
-    crisis_css = """
-    <style>
-        .crisis-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 10px; }
-        .crisis-card { background-color: #111111; padding: 20px; border-radius: 10px; box-shadow: inset 0 0 10px rgba(255,255,255,0.05); }
-        .crisis-card h4 { margin-top: 0; font-weight: 900; font-size: 1.1em; display: flex; align-items: center; gap: 10px; }
-        .crisis-subtext { font-style: italic; color: #E5E4E2; font-size: 0.9em; margin-top: -10px; margin-bottom: 15px; }
-        .crisis-body { color: #E5E4E2; line-height: 1.5; font-size: 0.95em; }
-        .crisis-body b { color: white; }
-        .card-1 { border: 2px solid #D4AF37; color: #D4AF37; } .card-1 h4 { color: #D4AF37; } .card-1 strong { color: #D4AF37; font-size: 1.05em; }
-        .card-2 { border: 2px solid #B87333; color: #B87333; } .card-2 h4 { color: #B87333; } .card-2 strong { color: #B87333; font-size: 1.05em; }
-        .card-3 { border: 2px solid #006666; color: #006666; } .card-3 h4 { color: #006666; } .card-3 strong { color: #006666; font-size: 1.05em; }
-    </style>
+    # --- ERROR-PROOF INLINE HTML FOR CRISIS CARDS (Matches Image) ---
+    st.markdown("### STRATEGIC CONTINGENCY IMPERATIVES 🔗")
+    
+    crisis_html = f"""
+    <div style="display:flex; flex-wrap:wrap; gap:20px; margin-top:15px; font-family:sans-serif;">
+        <!-- Card 1 -->
+        <div style="flex:1; min-width:300px; background:#111; border:2px solid {GOLD}; border-radius:10px; padding:20px;">
+            <div style="display:flex; align-items:center; gap:15px; margin-bottom:10px;">
+                <div style="font-size:45px;">🥡</div>
+                <h4 style="color:{GOLD}; margin:0; font-weight:900; line-height:1.2; font-size:1.1em;">1. DARK KITCHEN<br>ARCHITECTURE</h4>
+            </div>
+            <p style="font-style:italic; color:#ccc; font-size:0.9em; margin-top:0;">Condition: Dine-In restricted &lt; 30%</p>
+            <p style="color:#eee; font-size:0.95em; line-height:1.5;"><b style="color:white;">Risk:</b> Fixed real-estate costs become a lethal liability.</p>
+            <p style="color:#eee; font-size:0.95em; line-height:1.5;"><b style="color:white;">Action:</b> Negotiate a clause to sub-lease kitchen space to a secondary virtual brand to offset the <strong style="color:{GOLD};">{FIXED_COSTS/1000:,.0f}k AED fixed costs</strong>.</p>
+        </div>
+        <!-- Card 2 -->
+        <div style="flex:1; min-width:300px; background:#111; border:2px solid {COPPER}; border-radius:10px; padding:20px;">
+            <div style="display:flex; align-items:center; gap:15px; margin-bottom:10px;">
+                <div style="font-size:45px;">🛵</div>
+                <h4 style="color:{COPPER}; margin:0; font-weight:900; line-height:1.2; font-size:1.1em;">2. MARGIN SHIELDING</h4>
+            </div>
+            <p style="font-style:italic; color:#ccc; font-size:0.9em; margin-top:0;">Target: {del_fee}% Commission Mitigation</p>
+            <p style="color:#eee; font-size:0.95em; line-height:1.5;"><b style="color:white;">Challenge:</b> The current model requires <strong style="color:{COPPER};">{bep_delivery_orders:,.0f} delivery orders</strong> just to break even.</p>
+            <p style="color:#eee; font-size:0.95em; line-height:1.5;"><b style="color:white;">Action:</b> Engineer a 'Delivery-Only' menu subset using lower-cost ingredients (buffering the <strong style="color:{COPPER};">{supply_mult}x supply multiplier</strong>) to protect the base <strong style="color:{COPPER};">{BASE_AOV:,.0f} AED average order value</strong>.</p>
+        </div>
+        <!-- Card 3 -->
+        <div style="flex:1; min-width:300px; background:#111; border:2px solid {TEAL}; border-radius:10px; padding:20px;">
+            <div style="display:flex; align-items:center; gap:15px; margin-bottom:10px;">
+                <div style="font-size:45px;">🏦</div>
+                <h4 style="color:{TEAL}; margin:0; font-weight:900; line-height:1.2; font-size:1.1em;">3. LIQUIDITY<br>PRESERVATION</h4>
+            </div>
+            <p style="font-style:italic; color:#ccc; font-size:0.9em; margin-top:0;">Status: Capital Protection</p>
+            <p style="color:#eee; font-size:0.95em; line-height:1.5;"><b style="color:white;">Warning:</b> Rapid cash hemorrhage occurs if COGS spikes simultaneously with platform fees.</p>
+            <p style="color:#eee; font-size:0.95em; line-height:1.5;"><b style="color:white;">Action:</b> Secure a rolling credit facility equalling <strong style="color:{TEAL};">3 months of OPEX</strong> prior to launch, rather than scrambling for equity dilution post-crisis.</p>
+        </div>
+    </div>
     """
-    
-    # F-string formatted with zero blank lines between elements
-    crisis_html = f"""<div class="crisis-grid"><div class="crisis-card card-1"><h4>1. DARK KITCHEN ARCHITECTURE</h4><p class="crisis-subtext">Condition: Dine-In restricted < 30%</p><div class="crisis-body"><p><b>Risk:</b> Fixed real-estate costs become a lethal liability.</p><p><b>Action:</b> Negotiate a clause to sub-lease kitchen space to a secondary virtual brand to offset the <strong>{FIXED_COSTS/1000:,.0f}k AED fixed costs</strong>.</p></div></div><div class="crisis-card card-2"><h4>2. MARGIN SHIELDING</h4><p class="crisis-subtext">Target: {del_fee}% Commission Mitigation</p><div class="crisis-body"><p><b>Challenge:</b> Current model requires <strong>{bep_delivery_orders:,.0f} delivery orders</strong> just to break even.</p><p><b>Action:</b> Engineer a 'Delivery-Only' menu subset using lower-cost ingredients (buffering the <strong>{supply_mult}x supply multiplier</strong>) to protect the base <strong>{BASE_AOV:,.0f} AED avg order value</strong>.</p></div></div><div class="crisis-card card-3"><h4>3. LIQUIDITY PRESERVATION</h4><p class="crisis-subtext">Status: Capital Protection</p><div class="crisis-body"><p><b>Warning:</b> COGS spikes and platform fees cause rapid cash hemorrhage.</p><p><b>Action:</b> Secure a rolling credit facility equalling <strong>3 months of OPEX</strong> before launch, to avoid equity dilution post-crisis.</p></div></div></div>"""
-    
-    st.markdown(crisis_css + crisis_html, unsafe_allow_html=True)
-
+    st.markdown(crisis_html, unsafe_allow_html=True)
 
 # =========================================================
 # TAB 5: Strategic Business Plan
@@ -384,44 +244,56 @@ with tab4:
 with tab5:
     st.subheader("Enterprise Blueprint & Investor Pitch")
     
-    bp_css = """
-    <style>
-        .bp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-top: 15px; margin-bottom: 30px; }
-        .bp-card { background-color: #111111; padding: 25px; border-radius: 10px; box-shadow: inset 0 0 10px rgba(255,255,255,0.05); border-left: 4px solid #D4AF37; }
-        .bp-card h4 { margin-top: 0; color: #D4AF37; font-weight: 900; font-size: 1.15em; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .bp-body { color: #E5E4E2; line-height: 1.6; font-size: 0.95em; }
-        .bp-body b { color: white; }
-        .bp-body ul { padding-left: 20px; margin-top: 10px; }
-        
-        .timeline-container { border-left: 3px solid #006666; padding-left: 20px; margin-top: 20px; }
-        .timeline-step { margin-bottom: 20px; position: relative; }
-        .timeline-step::before { content: ''; position: absolute; left: -27px; top: 5px; width: 11px; height: 11px; background-color: #006666; border-radius: 50%; border: 2px solid #111111; }
-        .timeline-step h5 { color: #006666; margin: 0 0 5px 0; font-weight: bold; font-size: 1.1em; }
-        .timeline-content { background-color: #111111; padding: 15px; border-radius: 8px; border: 1px solid #333; color: #E5E4E2; font-size: 0.95em; }
-    </style>
-    """
-    
-    # Core Strategy Cards (No blank lines inside HTML)
-    strategy_html = """<div class="bp-grid"><div class="bp-card"><h4>1. Executive Summary</h4><div class="bp-body"><p>Operated at the intersection of hospitality and corporate scaling, this venture utilizes advanced AI and predictive analytics to disrupt Dubai's fusion culinary space. Positioned for strategic business leadership and rapid expansion, our model guarantees premium dining experiences backed by highly optimized, data-driven unit economics.</p></div></div><div class="bp-card"><h4>2. Market Analysis</h4><div class="bp-body"><p>Targeting the lucrative intersection of <b>High-Roller Foodies</b> (high LTV, inelastic) and <b>Value Regulars</b> (consistent baseline revenue). Located strategically in high-density corporate and residential hubs (Downtown Dubai, Dubai Marina), capitalizing on the demand for hybrid experiential dining.</p></div></div><div class="bp-card"><h4>3. Pricing Strategy</h4><div class="bp-body"><p><b>Dynamic & Value-Based:</b> Leveraging standard price elasticity algorithms to maintain a 15% premium on anchor fusion dishes while offering high-margin, low-barrier entry items to secure volume. Algorithmic adjustments track supply chain multipliers to fiercely protect the base 150 AED Average Order Value.</p></div></div><div class="bp-card"><h4>4. Operational Plan</h4><div class="bp-body"><p><b>Tech-First Infrastructure:</b> Operations rely on intelligent process automation bots to handle third-party delivery EDI and streamline client support workflows. This minimizes human error in order routing and enables seamless integration with secondary virtual dark-kitchen brands.</p></div></div></div>"""
-    
-    st.markdown(bp_css + strategy_html, unsafe_allow_html=True)
-    
-    st.divider()
-    
-    # Financial Projections Summary
-    st.markdown("### 5. High-Level Financial Projections")
+    # Financial Projections Metric Row
     f1, f2, f3, f4 = st.columns(4)
     f1.metric("Target Year 1 Revenue", "AED 4.2M", "Base + Delivery")
     f2.metric("Target Gross Margin", "70%", "Optimized COGS")
     f3.metric("Required OPEX Runway", "3 Months", "Crisis Buffer")
     f4.metric("Breakeven Timeline", "Month 8", "Post-Launch")
     
+    # Error-Proof Inline HTML for Business Plan Cards
+    bp_html = f"""
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px; margin-top:25px;">
+        <div style="background:#111; border-left:4px solid {GOLD}; padding:20px; border-radius:8px;">
+            <h4 style="color:{GOLD}; margin-top:0; font-weight:900; border-bottom:1px solid #333; padding-bottom:10px;">🏢 1. Executive Summary</h4>
+            <p style="color:#eee; font-size:0.95em; line-height:1.6;">Operating at the intersection of hospitality and corporate scaling, this venture utilizes advanced AI and predictive analytics to disrupt Dubai's fusion culinary space. Positioned for strategic business leadership and rapid expansion, our model guarantees premium dining experiences backed by optimized unit economics.</p>
+        </div>
+        <div style="background:#111; border-left:4px solid {TEAL}; padding:20px; border-radius:8px;">
+            <h4 style="color:{TEAL}; margin-top:0; font-weight:900; border-bottom:1px solid #333; padding-bottom:10px;">📊 2. Market Analysis</h4>
+            <p style="color:#eee; font-size:0.95em; line-height:1.6;">Targeting the lucrative intersection of <b>High-Roller Foodies</b> (high LTV, inelastic) and <b>Value Regulars</b>. Located strategically in high-density corporate and residential hubs (Downtown Dubai, Dubai Marina), capitalizing on the demand for hybrid experiential dining.</p>
+        </div>
+        <div style="background:#111; border-left:4px solid {COPPER}; padding:20px; border-radius:8px;">
+            <h4 style="color:{COPPER}; margin-top:0; font-weight:900; border-bottom:1px solid #333; padding-bottom:10px;">💰 3. Pricing Strategy</h4>
+            <p style="color:#eee; font-size:0.95em; line-height:1.6;"><b>Dynamic & Value-Based:</b> Leveraging price elasticity algorithms to maintain a 15% premium on anchor dishes while offering high-margin entry items. Algorithmic adjustments track supply chain multipliers to fiercely protect the base 150 AED Average Order Value.</p>
+        </div>
+        <div style="background:#111; border-left:4px solid {PLATINUM}; padding:20px; border-radius:8px;">
+            <h4 style="color:{PLATINUM}; margin-top:0; font-weight:900; border-bottom:1px solid #333; padding-bottom:10px;">⚙️ 4. Operational Plan</h4>
+            <p style="color:#eee; font-size:0.95em; line-height:1.6;"><b>Tech-First Infrastructure:</b> Operations rely on intelligent process automation bots to handle 3rd-party delivery EDI and streamline client support workflows. Minimizes human error in routing and enables seamless integration with secondary virtual dark-kitchen brands.</p>
+        </div>
+    </div>
+    """
+    st.markdown(bp_html, unsafe_allow_html=True)
+    
     st.divider()
+    st.markdown("### 🚀 90-Day Execution Plan")
     
-    # 90-Day Execution Timeline (No blank lines inside HTML)
-    st.markdown("### 6. 90-Day Execution Plan")
-    st.markdown("<p style='color: #E5E4E2;'>A rigorous launch timeline mapping out the synthetic sales data models into a finalized investor pitch and operational rollout.</p>", unsafe_allow_html=True)
-    
-    timeline_html = """<div class="timeline-container"><div class="timeline-step"><h5>Days 1 - 30: Prototyping & Capital Allocation</h5><div class="timeline-content"><b>Objectives:</b> Finalize the interactive dashboard prototype and synthesize the investor pitch. Secure the rolling credit facility for 3 months of OPEX. Initiate lease negotiations with dark-kitchen scalability clauses.</div></div><div class="timeline-step"><h5>Days 31 - 60: Tech Infrastructure & Automation</h5><div class="timeline-content"><b>Objectives:</b> Deploy process automation bots for inventory management and EDI integration with third-party delivery platforms. Conduct K-Means demographic testing on localized marketing channels.</div></div><div class="timeline-step"><h5>Days 61 - 90: Soft Launch & Model Calibration</h5><div class="timeline-content"><b>Objectives:</b> Execute localized soft launch targeting 'Value Regulars'. Activate Apriori-based upselling logic on digital menus. Calibrate price elasticity algorithms based on real-world customer acquisition costs (CAC) and conversion data prior to hard launch.</div></div></div>"""
-    
+    timeline_html = f"""
+    <div style="border-left:3px solid {TEAL}; padding-left:20px; margin-top:10px;">
+        <div style="margin-bottom:20px; position:relative;">
+            <div style="position:absolute; left:-27px; top:5px; width:11px; height:11px; background:{TEAL}; border-radius:50%; border:2px solid #111;"></div>
+            <h5 style="color:{TEAL}; margin:0 0 5px 0; font-weight:bold; font-size:1.1em;">Days 1 - 30: Prototyping & Capital Allocation</h5>
+            <div style="background:#111; padding:15px; border-radius:8px; border:1px solid #333; color:#eee; font-size:0.95em;"><b>Objectives:</b> Finalize the interactive dashboard prototype and synthesize the investor pitch. Secure the rolling credit facility for 3 months of OPEX. Initiate lease negotiations with dark-kitchen scalability clauses.</div>
+        </div>
+        <div style="margin-bottom:20px; position:relative;">
+            <div style="position:absolute; left:-27px; top:5px; width:11px; height:11px; background:{TEAL}; border-radius:50%; border:2px solid #111;"></div>
+            <h5 style="color:{TEAL}; margin:0 0 5px 0; font-weight:bold; font-size:1.1em;">Days 31 - 60: Tech Infrastructure & Automation</h5>
+            <div style="background:#111; padding:15px; border-radius:8px; border:1px solid #333; color:#eee; font-size:0.95em;"><b>Objectives:</b> Deploy process automation bots for inventory management and EDI integration with third-party delivery platforms. Conduct localized marketing tests targeting the core persona clusters.</div>
+        </div>
+        <div style="margin-bottom:0; position:relative;">
+            <div style="position:absolute; left:-27px; top:5px; width:11px; height:11px; background:{TEAL}; border-radius:50%; border:2px solid #111;"></div>
+            <h5 style="color:{TEAL}; margin:0 0 5px 0; font-weight:bold; font-size:1.1em;">Days 61 - 90: Soft Launch & Model Calibration</h5>
+            <div style="background:#111; padding:15px; border-radius:8px; border:1px solid #333; color:#eee; font-size:0.95em;"><b>Objectives:</b> Execute localized soft launch. Activate Apriori-based upselling logic on digital menus. Calibrate price elasticity algorithms based on real-world customer acquisition costs (CAC) and conversion data prior to hard launch.</div>
+        </div>
+    </div>
+    """
     st.markdown(timeline_html, unsafe_allow_html=True)
