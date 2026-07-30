@@ -27,7 +27,7 @@ DISTINCT_COLORS = [GOLD, TEAL, COPPER, "#8B0000", PLATINUM, "#5F9EA0", "#D2691E"
 @st.cache_data
 def load_data():
     np.random.seed(42)
-    n = 500  # Survey Respondents
+    n = 500  
     
     areas = ['Downtown Dubai', 'Dubai Marina', 'Jumeirah', 'DIFC', 'Business Bay']
     cuisines_pool = ['Japanese', 'Peruvian', 'Levantine', 'Italian', 'Indian', 'Mexican']
@@ -44,7 +44,6 @@ def load_data():
     }
     df = pd.DataFrame(data)
     
-    # Generate multi-select cuisines (2 to 3 per person to find blends)
     df['Cuisines_Enjoyed'] = [", ".join(np.random.choice(cuisines_pool, np.random.randint(2, 4), replace=False)) for _ in range(n)]
     df['Age'] = df['Age'].clip(18, 70)
     
@@ -86,56 +85,20 @@ tab_bp, tab_demo, tab_menu, tab_ops, tab_fin = st.tabs([
 with tab_bp:
     st.subheader("Data-Driven Launch Strategy (Based on 500 Responses)")
     
-    f1, f2, f3, f4 = st.columns(4)
+    f1, f2, f3, f4 = st.columns([1, 1, 1.4, 1.4])
     f1.metric("Total Survey Validations", f"{len(df)}", "Respondents")
     f2.metric("Market AOV (Spend)", f"AED {df['Spend_Capacity (AED)'].mean():.0f}", "Avg Capacity")
     f3.metric("Peak Demand Window", df['Preferred_Timing'].mode()[0], "Highest Volume")
     f4.metric("Top Location Request", df['Area_Preference'].mode()[0], "Prime Real Estate")
     
-    bp_html = f"""
-    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px; margin-top:25px;">
-        <div style="background:#111; border-left:4px solid {GOLD}; padding:20px; border-radius:8px;">
-            <h4 style="color:{GOLD}; margin-top:0; font-weight:900; border-bottom:1px solid #333; padding-bottom:10px;">📍 Location Strategy</h4>
-            <p style="color:#eee; font-size:0.95em; line-height:1.6;">Survey data heavily indexes toward corporate/premium hubs. Targeting real estate in <b>{df['Area_Preference'].mode()[0]}</b> captures the highest concentration of high-spend individuals. A secondary outpost in DIFC caters to the corporate lunch crowd.</p>
-        </div>
-        <div style="background:#111; border-left:4px solid {TEAL}; padding:20px; border-radius:8px;">
-            <h4 style="color:{TEAL}; margin-top:0; font-weight:900; border-bottom:1px solid #333; padding-bottom:10px;">🛋️ Interior & Atmosphere</h4>
-            <p style="color:#eee; font-size:0.95em; line-height:1.6;">The audience demands a dual-experience environment. The layout must prioritize a <b>{df['Seating_Vibe'].mode()[0]}</b> for the evening rush, transitioning smoothly from an intimate dining setting into a high-energy lounge to maximize late-night beverage sales.</p>
-        </div>
-        <div style="background:#111; border-left:4px solid {COPPER}; padding:20px; border-radius:8px;">
-            <h4 style="color:{COPPER}; margin-top:0; font-weight:900; border-bottom:1px solid #333; padding-bottom:10px;">🥢 Menu & Blending</h4>
-            <p style="color:#eee; font-size:0.95em; line-height:1.6;">The data confirms a strong appetite for bold combinations. Menu engineering should focus heavily on the top intersecting cuisine pairs discovered in the survey, allowing for a streamlined supply chain by cross-utilizing premium ingredients.</p>
-        </div>
-        <div style="background:#111; border-left:4px solid {PLATINUM}; padding:20px; border-radius:8px;">
-            <h4 style="color:{PLATINUM}; margin-top:0; font-weight:900; border-bottom:1px solid #333; padding-bottom:10px;">⏱️ Operational Efficiency</h4>
-            <p style="color:#eee; font-size:0.95em; line-height:1.6;">Peak staffing and inventory must align with the <b>{df['Preferred_Timing'].mode()[0]}</b> window. Table turnover rates must be tightly managed during this period, whereas lunch operations can operate with a leaner team utilizing automation.</p>
-        </div>
-    </div>
-    """
+    bp_html = f"""<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap:20px; margin-top:25px; align-items:stretch;"><div style="background:#111; border-left:4px solid {GOLD}; padding:20px; border-radius:8px; height:100%; box-sizing:border-box;"><h4 style="color:{GOLD}; margin-top:0; font-weight:900; border-bottom:1px solid #333; padding-bottom:10px;">📍 Location Strategy</h4><p style="color:#eee; font-size:0.95em; line-height:1.6; margin-bottom:0;">Survey data heavily indexes toward corporate/premium hubs. Targeting real estate in <b>{df['Area_Preference'].mode()[0]}</b> captures the highest concentration of high-spend individuals. A secondary outpost in DIFC caters to the corporate lunch crowd.</p></div><div style="background:#111; border-left:4px solid {TEAL}; padding:20px; border-radius:8px; height:100%; box-sizing:border-box;"><h4 style="color:{TEAL}; margin-top:0; font-weight:900; border-bottom:1px solid #333; padding-bottom:10px;">🛋️ Interior & Atmosphere</h4><p style="color:#eee; font-size:0.95em; line-height:1.6; margin-bottom:0;">The audience demands a dual-experience environment. The layout must prioritize a <b>{df['Seating_Vibe'].mode()[0]}</b> for the evening rush, transitioning smoothly from an intimate dining setting into a high-energy lounge to maximize late-night beverage sales.</p></div><div style="background:#111; border-left:4px solid {COPPER}; padding:20px; border-radius:8px; height:100%; box-sizing:border-box;"><h4 style="color:{COPPER}; margin-top:0; font-weight:900; border-bottom:1px solid #333; padding-bottom:10px;">🥢 Menu & Blending</h4><p style="color:#eee; font-size:0.95em; line-height:1.6; margin-bottom:0;">The data confirms a strong appetite for bold combinations. Menu engineering should focus heavily on the top intersecting cuisine pairs discovered in the survey, allowing for a streamlined supply chain by cross-utilizing premium ingredients.</p></div><div style="background:#111; border-left:4px solid {PLATINUM}; padding:20px; border-radius:8px; height:100%; box-sizing:border-box;"><h4 style="color:{PLATINUM}; margin-top:0; font-weight:900; border-bottom:1px solid #333; padding-bottom:10px;">⏱️ Operational Efficiency</h4><p style="color:#eee; font-size:0.95em; line-height:1.6; margin-bottom:0;">Peak staffing and inventory must align with the <b>{df['Preferred_Timing'].mode()[0]}</b> window. Table turnover rates must be tightly managed during this period, whereas lunch operations can operate with a leaner team utilizing automation.</p></div></div>"""
     st.markdown(bp_html, unsafe_allow_html=True)
     
     st.divider()
     st.markdown("### 🚀 Real-World Execution Timeline")
     
-    timeline_html = f"""
-    <div style="border-left:3px solid {TEAL}; padding-left:20px; margin-top:10px;">
-        <div style="margin-bottom:20px; position:relative;">
-            <div style="position:absolute; left:-27px; top:5px; width:11px; height:11px; background:{TEAL}; border-radius:50%; border:2px solid #111;"></div>
-            <h5 style="color:{TEAL}; margin:0 0 5px 0; font-weight:bold; font-size:1.1em;">Days 1 - 30: Location & Culinary R&D</h5>
-            <div style="background:#111; padding:15px; border-radius:8px; border:1px solid #333; color:#eee; font-size:0.95em;"><b>Action:</b> Leverage survey data to negotiate lease terms in the top-voted neighborhood. Finalize R&D for the top 3 fusion blends. Secure supply chain contracts for cross-utilized ingredients.</div>
-        </div>
-        <div style="margin-bottom:20px; position:relative;">
-            <div style="position:absolute; left:-27px; top:5px; width:11px; height:11px; background:{TEAL}; border-radius:50%; border:2px solid #111;"></div>
-            <h5 style="color:{TEAL}; margin:0 0 5px 0; font-weight:bold; font-size:1.1em;">Days 31 - 60: Interior Zoning & Staffing</h5>
-            <div style="background:#111; padding:15px; border-radius:8px; border:1px solid #333; color:#eee; font-size:0.95em;"><b>Action:</b> Zone the restaurant seating to match the survey's vibe preferences (e.g., 60% High-Energy Lounge, 40% Intimate Dining). Hire front-of-house staff optimized for the identified peak operational hours.</div>
-        </div>
-        <div style="margin-bottom:0; position:relative;">
-            <div style="position:absolute; left:-27px; top:5px; width:11px; height:11px; background:{TEAL}; border-radius:50%; border:2px solid #111;"></div>
-            <h5 style="color:{TEAL}; margin:0 0 5px 0; font-weight:bold; font-size:1.1em;">Days 61 - 90: Soft Launch Targeting</h5>
-            <div style="background:#111; padding:15px; border-radius:8px; border:1px solid #333; color:#eee; font-size:0.95em;"><b>Action:</b> Send exclusive soft-launch invitations to the 500 original survey respondents. Use their initial feedback to calibrate menu pricing and service flow before the official grand opening.</div>
-        </div>
-    </div>
-    """
+    # NEW EXCITING TIMELINE DESIGN (Replaces the boring vertical line)
+    timeline_html = f"""<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px; margin-top:20px; align-items:stretch;"><div style="background:#111; border-top:5px solid {GOLD}; padding:25px; border-radius:10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); height:100%; box-sizing:border-box;"><div style="font-size:45px; margin-bottom:15px;">🏗️</div><div style="color:#aaa; font-size:0.85em; font-weight:bold; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:5px;">Days 1 - 30</div><h4 style="color:{GOLD}; margin:0 0 15px 0; font-weight:900; font-size:1.3em;">FOUNDATION & R&D</h4><p style="color:#eee; font-size:0.95em; line-height:1.6; margin:0;"><b style="color:white;">Action:</b> Leverage survey data to negotiate lease terms in the top-voted neighborhood. Finalize R&D for the top 3 fusion blends. Secure supply chain contracts for cross-utilized ingredients.</p></div><div style="background:#111; border-top:5px solid {COPPER}; padding:25px; border-radius:10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); height:100%; box-sizing:border-box;"><div style="font-size:45px; margin-bottom:15px;">⚙️</div><div style="color:#aaa; font-size:0.85em; font-weight:bold; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:5px;">Days 31 - 60</div><h4 style="color:{COPPER}; margin:0 0 15px 0; font-weight:900; font-size:1.3em;">OPS & STAFFING</h4><p style="color:#eee; font-size:0.95em; line-height:1.6; margin:0;"><b style="color:white;">Action:</b> Zone the restaurant seating to match the survey's vibe preferences (e.g., 60% High-Energy Lounge, 40% Intimate Dining). Hire front-of-house staff optimized for the identified peak operational hours.</p></div><div style="background:#111; border-top:5px solid {TEAL}; padding:25px; border-radius:10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); height:100%; box-sizing:border-box;"><div style="font-size:45px; margin-bottom:15px;">🚀</div><div style="color:#aaa; font-size:0.85em; font-weight:bold; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:5px;">Days 61 - 90</div><h4 style="color:{TEAL}; margin:0 0 15px 0; font-weight:900; font-size:1.3em;">SOFT LAUNCH</h4><p style="color:#eee; font-size:0.95em; line-height:1.6; margin:0;"><b style="color:white;">Action:</b> Send exclusive soft-launch invitations to the 500 original survey respondents. Use their initial feedback to calibrate menu pricing and service flow before the official grand opening.</p></div></div>"""
     st.markdown(timeline_html, unsafe_allow_html=True)
 
 # =========================================================
@@ -180,7 +143,6 @@ with tab_menu:
 
     with c2:
         with st.container(border=True):
-            # Calculate top requested pairs for Fusion
             pair_counts = {}
             for row in df['Cuisines_Enjoyed']:
                 items = sorted(row.split(', '))
@@ -226,8 +188,7 @@ with tab_ops:
 with tab_fin:
     st.subheader("Menu Pricing & Revenue Projection")
     
-    # Calculate baseline revenue directly from survey spend capacity
-    total_expected_diners = len(df) * 4 # Assuming respondents visit 4 times a month on average for model scaling
+    total_expected_diners = len(df) * 4 
     base_avg_spend = df['Spend_Capacity (AED)'].mean()
     base_revenue = total_expected_diners * base_avg_spend
     
@@ -235,8 +196,7 @@ with tab_fin:
     
     price_increase = st.slider("Test Menu Price Increase Premium (%)", min_value=0, max_value=30, value=15, step=1)
     
-    # Simple elasticity: higher price drops volume
-    scaled_drop_off = (price_increase / 100.0) * -0.65 # Assume 0.65 elasticity factor
+    scaled_drop_off = (price_increase / 100.0) * -0.65 
     
     new_visits = total_expected_diners * (1 + scaled_drop_off)
     new_spend = base_avg_spend * (1 + (price_increase/100))
