@@ -341,86 +341,16 @@ with tab4:
     fig_runway.update_layout(xaxis_title="Timeline", yaxis_title="Cash Balance (AED)")
     st.plotly_chart(fig_runway, use_container_width=True)
 
-    # === [REPLACED OLD TEXT BLOCK SECTION WITH REDESIGN] ===
-    st.divider()
-    st.markdown("### Strategic Contingency Imperatives 🔗")
-
-    # Use HTML/CSS to inject the new card design and structure
-    cards_html = f"""
-    <style>
-        /* Define the grid layout */
-        .crisis-grid {{
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }}
-        /* Standard card styles */
-        .crisis-card {{
-            background-color: {DARK_BG};
-            padding: 20px;
-            border-radius: 10px;
-            position: relative;
-            box-shadow: inset 0 0 10px rgba(255,255,255,0.05);
-        }}
-        /* Refine typography inside cards */
-        .crisis-card h4 {{
-            margin-top: 0;
-            font-weight: bold;
-            font-size: 1.1em;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }}
-        .crisis-card h4 span {{
-            font-weight: 900;
-        }}
-        .crisis-subtext {{
-            font-style: italic;
-            color: #E5E4E2;
-            font-size: 0.9em;
-            margin-top: -10px;
-            margin-bottom: 15px;
-        }}
-        .crisis-body b {{
-            color: white; /* Category labels like 'Risk' or 'Action' */
-        }}
-        .crisis-body strong {{
-            color: {GOLD}; /* Key terms in gold */
-        }}
-        .crisis-body strong.value {{
-            font-size: 1.1em; /* Key financial/operational numbers slightly larger */
-        }}
-
-        /* Apply Premium Color Palette borders */
-        .card-1 {{ border: 2px solid {COPPER}; color: {COPPER}; }}
-        .card-1 h4 {{ color: {GOLD}; }}
-        
-        .card-2 {{ border: 2px solid {COPPER}; color: {COPPER}; }}
-        .card-2 h4 {{ color: {COPPER}; }}
-        
-        .card-3 {{ border: 2px solid {TEAL}; color: {TEAL}; }}
-        .card-3 h4 {{ color: {TEAL}; }}
-    </style>
-
+    # Cleaned HTML string (No f-prefix needed since values are hardcoded)
+    cards_html = """
     <div class="crisis-grid">
-        <!-- CARD 1: Dark Kitchen Architecture -->
-        <div class="crisis-card card-1">
-            <h4><span>1.</span> DARK KITCHEN ARCHITECTURE</h4>
-            <p class="crisis-subtext">Condition: Dine-In restricted &lt; 30%</p>
-            <div class="crisis-body">
-                <p><b>Risk:</b> Fixed real-estate costs become a lethal liability.</p>
-                <p><b>Action:</b> Negotiate a clause to sub-lease kitchen space to a secondary virtual brand to offset the <strong class="value">{FIXED_COSTS/1000:,.0f}k AED fixed costs</strong>.</p>
-            </div>
-        </div>
-
         <!-- CARD 2: Margin Shielding -->
         <div class="crisis-card card-2">
             <h4><span>2.</span> MARGIN SHIELDING</h4>
             <p class="crisis-subtext">Target: 30% Commission Mitigation</p>
             <div class="crisis-body">
-                <p><b>Challenge:</b> Current model requires <strong class="value">{bep_delivery_orders:,.0f} delivery orders</strong> just to break even.</p>
-                <p><b>Action:</b> Engineer a <strong>'Delivery-Only' menu</strong> subset using lower-cost ingredients (buffering the <strong>{supply_mult}x supply multiplier</strong>) to protect the base <strong class="value">{BASE_AOV:,.0f} AED average order value</strong>.</p>
+                <p><b>Challenge:</b> Current model requires <strong class="value">2,353 delivery orders</strong> just to break even.</p>
+                <p><b>Action:</b> Engineer a <strong>'Delivery-Only' menu</strong> subset using lower-cost ingredients (buffering the <strong>1.2x supply multiplier</strong>) to protect the base <strong class="value">150 AED average order value</strong>.</p>
             </div>
         </div>
 
@@ -435,5 +365,5 @@ with tab4:
         </div>
     </div>
     """
+    
     st.markdown(cards_html, unsafe_allow_html=True)
-    # === [REDESIGN END] ===
