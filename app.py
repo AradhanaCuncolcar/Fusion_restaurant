@@ -52,7 +52,7 @@ def load_data():
 df_raw = load_data()
 
 # ---------------------------------------------------------
-# 3. GLOBAL SIDEBAR
+# 3. GLOBAL SIDEBAR (Demographics Only)
 # ---------------------------------------------------------
 st.sidebar.header("Global Filters")
 st.sidebar.markdown("Slice the survey data to target specific demographics.")
@@ -71,13 +71,13 @@ if df.empty:
 # ---------------------------------------------------------
 st.title("🍽️ Dubai Fusion: Pre-Launch Survey Analytics")
 
-tab_bp, tab_demo, tab_menu, tab_ops, tab_fin, tab_crisis = st.tabs([
+tab_bp, tab_demo, tab_menu, tab_ops, tab_fin, tab_whatif = st.tabs([
     "📑 Executive Blueprint",
     "📊 Demographics & Location", 
-    "🥢 Cuisine & Menu Engineering", 
-    "🛋️ Atmosphere & Operations",
+    "🥢 Cuisine & Menu", 
+    "🛋️ Atmosphere & Ops",
     "📈 Financial Projections",
-    "🚨 Pandemic Crisis Model"
+    "🚨 What-If Analysis"
 ])
 
 # =========================================================
@@ -230,25 +230,38 @@ with tab_fin:
         st.plotly_chart(fig_waterfall, use_container_width=True)
 
 # =========================================================
-# TAB 6: Pandemic Stress-Test (Crisis Model)
+# TAB 6: What-If Analysis (Pandemic Crisis)
 # =========================================================
-with tab_crisis:
-    st.subheader("Financial Contagion & Survival Stress-Test")
-    st.markdown("Model a severe 6-month operational disruption occurring post-launch.")
+with tab_whatif:
+    st.subheader("What-If Analysis: Interactive Scenario Planning")
+    st.markdown("""
+    **Concept of What-If Analysis:**  
+    Strategic decision-making relies on understanding how changes in *independent variables* (e.g., market disruptions, cost spikes) impact your *dependent variables* (e.g., cash flow, survivability). 
     
+    Use the interactive levers below to model various pandemic severity scenarios and instantly observe the projected financial outcomes. This allows us to proactively build contingency plans rather than reacting passively to a crisis.
+    """)
+    st.divider()
+    
+    # Base Constants
     CASH_RESERVES = 750000 
     FIXED_COSTS = 120000 
     BASE_DINE_IN_REV = 250000
     BASE_DELIVERY_REV = 80000
     BASE_AOV = 150 
     
-    st.sidebar.markdown("---")
-    st.sidebar.header("Crisis Variables")
-    cap_limit = st.sidebar.slider("Dine-In Capacity Limit (%)", 0, 100, 30, step=10)
-    del_surge = st.sidebar.slider("Delivery Volume Surge (%)", 0, 200, 50, step=10)
-    supply_mult = st.sidebar.slider("Supply Chain Cost Multiplier", 1.0, 2.0, 1.2, step=0.1)
-    del_fee = st.sidebar.slider("3rd-Party Delivery Fee (%)", 10, 40, 30, step=5)
+    # INTERACTIVE LEVERS (Moved inside the tab for true What-If interactivity)
+    st.markdown("### 🎛️ Adjust Scenario Levers")
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        cap_limit = st.slider("Dine-In Capacity Limit (%)", 0, 100, 30, step=10, help="Government mandated seating restriction.")
+    with col2:
+        del_surge = st.slider("Delivery Volume Surge (%)", 0, 200, 50, step=10, help="Expected spike in at-home ordering.")
+    with col3:
+        supply_mult = st.slider("Supply Cost Multiplier", 1.0, 2.0, 1.2, step=0.1, help="Inflation/scarcity cost increases.")
+    with col4:
+        del_fee = st.slider("3rd-Party Delivery Fee (%)", 10, 40, 30, step=5, help="Aggregator commission rates.")
     
+    # Dynamic Financial Calculations
     new_dine_in_rev = BASE_DINE_IN_REV * (cap_limit / 100.0)
     gross_delivery_rev = BASE_DELIVERY_REV * (1 + (del_surge / 100.0))
     net_delivery_rev = gross_delivery_rev * (1 - (del_fee / 100.0))
@@ -261,6 +274,16 @@ with tab_crisis:
     delivery_margin_per_order = BASE_AOV * (1 - cogs_pct - (del_fee / 100.0))
     bep_delivery_orders = FIXED_COSTS / delivery_margin_per_order if delivery_margin_per_order > 0 else float('inf')
     
+    st.divider()
+    st.markdown("### 📊 Scenario Outcomes")
+    
+    # Live KPI Metrics
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Dynamic Monthly Burn Rate", f"AED {monthly_burn:,.0f}" if monthly_burn > 0 else "Profitable", delta="Critical Alert" if monthly_burn > 50000 else "Stable", delta_color="inverse")
+    m2.metric("Required Delivery BEP", f"{bep_delivery_orders:,.0f} Orders/Mo" if bep_delivery_orders != float('inf') else "Unachievable", "To cover fixed costs")
+    m3.metric("Projected Cash Runway", f"{CASH_RESERVES / monthly_burn:.1f} Months" if monthly_burn > 0 else "Infinite", "Based on 750k AED Reserves")
+
+    # Live Updating Waterfall
     with st.container(border=True):
         fig_cf = go.Figure(go.Waterfall(
             name="Cash Flow", 
@@ -277,7 +300,7 @@ with tab_crisis:
         ))
         fig_cf.update_traces(cliponaxis=False)
         fig_cf.update_layout(
-            title="Monthly Crisis Cash Flow", 
+            title="Live Crisis Cash Flow Projection", 
             template="plotly_dark", 
             margin=dict(t=50, b=40, l=40, r=20),
             yaxis_title="Cash Balance (AED)",
