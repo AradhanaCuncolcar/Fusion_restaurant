@@ -199,7 +199,7 @@ with tab2:
     # --- REDESIGNED PERSONA CARDS ---
     st.markdown("#### Persona Synthesis")
     
-    # Standard String for CSS (No f-string bracket conflicts)
+    # Standard String for CSS 
     persona_css = """
     <style>
         .persona-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 10px; }
@@ -208,7 +208,6 @@ with tab2:
         .persona-stats { font-size: 0.95em; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #333; color: #E5E4E2; }
         .persona-stats b { color: white; }
         .persona-body { font-size: 0.95em; line-height: 1.5; color: #E5E4E2; }
-        
         .p-teal { border: 2px solid #006666; } .p-teal h4 { color: #006666; } .p-teal strong { color: #006666; }
         .p-gold { border: 2px solid #D4AF37; } .p-gold h4 { color: #D4AF37; } .p-gold strong { color: #D4AF37; }
         .p-plat { border: 2px solid #E5E4E2; } .p-plat h4 { color: #E5E4E2; } .p-plat strong { color: #E5E4E2; }
@@ -229,24 +228,11 @@ with tab2:
             c_class = "p-plat"
             desc = "Curiosity-driven visitors. They come in once a month for the 'experience' but aren't anchored to the brand."
             
-        # F-string for dynamic variables
-        persona_html += f"""
-        <div class="persona-card {c_class}">
-            <h4>{c_name}</h4>
-            <div class="persona-stats">
-                <div><b>Avg Age:</b> {int(row['Age'])}</div>
-                <div><b>Avg Spend:</b> AED {int(row['Spend (AED)'])}</div>
-                <div><b>Visits/Mo:</b> {row['Visit_Freq_Monthly']:.1f}</div>
-            </div>
-            <div class="persona-body">
-                <strong>Strategic Takeaway:</strong><br>{desc}
-            </div>
-        </div>
-        """
+        # Formatted string with no blank lines
+        persona_html += f"""<div class="persona-card {c_class}"><h4>{c_name}</h4><div class="persona-stats"><div><b>Avg Age:</b> {int(row['Age'])}</div><div><b>Avg Spend:</b> AED {int(row['Spend (AED)'])}</div><div><b>Visits/Mo:</b> {row['Visit_Freq_Monthly']:.1f}</div></div><div class="persona-body"><strong>Strategic Takeaway:</strong><br>{desc}</div></div>"""
         
     persona_html += '</div>'
     
-    # Render CSS and HTML together safely
     st.markdown(persona_css + persona_html, unsafe_allow_html=True)
 
 # =========================================================
@@ -264,7 +250,6 @@ with tab3:
     
     # Calculate weighted drop-off based on survey data
     avg_drop_off_15pct = df['Price_Increase15pct_VisitFreq_Change_Pct'].mean() 
-    # Scale drop off linearly for the sake of the model
     scaled_drop_off = (price_increase / 15.0) * avg_drop_off_15pct 
     
     new_visits = total_monthly_visits * (1 + scaled_drop_off)
@@ -372,7 +357,6 @@ with tab4:
     st.divider()
     st.markdown("### Strategic Contingency Imperatives 🔗")
 
-    # Standard String for CSS (No f-string bracket conflicts)
     crisis_css = """
     <style>
         .crisis-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 10px; }
@@ -381,44 +365,13 @@ with tab4:
         .crisis-subtext { font-style: italic; color: #E5E4E2; font-size: 0.9em; margin-top: -10px; margin-bottom: 15px; }
         .crisis-body { color: #E5E4E2; line-height: 1.5; font-size: 0.95em; }
         .crisis-body b { color: white; }
-        
         .card-1 { border: 2px solid #D4AF37; color: #D4AF37; } .card-1 h4 { color: #D4AF37; } .card-1 strong { color: #D4AF37; font-size: 1.05em; }
         .card-2 { border: 2px solid #B87333; color: #B87333; } .card-2 h4 { color: #B87333; } .card-2 strong { color: #B87333; font-size: 1.05em; }
         .card-3 { border: 2px solid #006666; color: #006666; } .card-3 h4 { color: #006666; } .card-3 strong { color: #006666; font-size: 1.05em; }
     </style>
     """
     
-    # F-string for dynamic variables
-    crisis_html = f"""
-    <div class="crisis-grid">
-        <div class="crisis-card card-1">
-            <h4>1. DARK KITCHEN ARCHITECTURE</h4>
-            <p class="crisis-subtext">Condition: Dine-In restricted < 30%</p>
-            <div class="crisis-body">
-                <p><b>Risk:</b> Fixed real-estate costs become a lethal liability.</p>
-                <p><b>Action:</b> Negotiate a clause to sub-lease kitchen space to a secondary virtual brand to offset the <strong>{FIXED_COSTS/1000:,.0f}k AED fixed costs</strong>.</p>
-            </div>
-        </div>
-
-        <div class="crisis-card card-2">
-            <h4>2. MARGIN SHIELDING</h4>
-            <p class="crisis-subtext">Target: {del_fee}% Commission Mitigation</p>
-            <div class="crisis-body">
-                <p><b>Challenge:</b> Current model requires <strong>{bep_delivery_orders:,.0f} delivery orders</strong> just to break even.</p>
-                <p><b>Action:</b> Engineer a 'Delivery-Only' menu subset using lower-cost ingredients (buffering the <strong>{supply_mult}x supply multiplier</strong>) to protect the base <strong>{BASE_AOV:,.0f} AED avg order value</strong>.</p>
-            </div>
-        </div>
-
-        <div class="crisis-card card-3">
-            <h4>3. LIQUIDITY PRESERVATION</h4>
-            <p class="crisis-subtext">Status: Capital Protection</p>
-            <div class="crisis-body">
-                <p><b>Warning:</b> COGS spikes and platform fees cause rapid cash hemorrhage.</p>
-                <p><b>Action:</b> Secure a rolling credit facility equalling <strong>3 months of OPEX</strong> before launch, to avoid equity dilution post-crisis.</p>
-            </div>
-        </div>
-    </div>
-    """
+    # F-string formatted with zero blank lines between elements
+    crisis_html = f"""<div class="crisis-grid"><div class="crisis-card card-1"><h4>1. DARK KITCHEN ARCHITECTURE</h4><p class="crisis-subtext">Condition: Dine-In restricted < 30%</p><div class="crisis-body"><p><b>Risk:</b> Fixed real-estate costs become a lethal liability.</p><p><b>Action:</b> Negotiate a clause to sub-lease kitchen space to a secondary virtual brand to offset the <strong>{FIXED_COSTS/1000:,.0f}k AED fixed costs</strong>.</p></div></div><div class="crisis-card card-2"><h4>2. MARGIN SHIELDING</h4><p class="crisis-subtext">Target: {del_fee}% Commission Mitigation</p><div class="crisis-body"><p><b>Challenge:</b> Current model requires <strong>{bep_delivery_orders:,.0f} delivery orders</strong> just to break even.</p><p><b>Action:</b> Engineer a 'Delivery-Only' menu subset using lower-cost ingredients (buffering the <strong>{supply_mult}x supply multiplier</strong>) to protect the base <strong>{BASE_AOV:,.0f} AED avg order value</strong>.</p></div></div><div class="crisis-card card-3"><h4>3. LIQUIDITY PRESERVATION</h4><p class="crisis-subtext">Status: Capital Protection</p><div class="crisis-body"><p><b>Warning:</b> COGS spikes and platform fees cause rapid cash hemorrhage.</p><p><b>Action:</b> Secure a rolling credit facility equalling <strong>3 months of OPEX</strong> before launch, to avoid equity dilution post-crisis.</p></div></div></div>"""
     
-    # Render CSS and HTML together safely
     st.markdown(crisis_css + crisis_html, unsafe_allow_html=True)
