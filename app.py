@@ -52,7 +52,7 @@ def load_data():
 df_raw = load_data()
 
 # ---------------------------------------------------------
-# 3. GLOBAL SIDEBAR (Demographics Only)
+# 3. GLOBAL SIDEBAR
 # ---------------------------------------------------------
 st.sidebar.header("Global Filters")
 st.sidebar.markdown("Slice the survey data to target specific demographics.")
@@ -74,10 +74,10 @@ st.title("🍽️ Dubai Fusion: Pre-Launch Survey Analytics")
 tab_bp, tab_demo, tab_menu, tab_ops, tab_fin, tab_whatif = st.tabs([
     "📑 Executive Blueprint",
     "📊 Demographics & Location", 
-    "🥢 Cuisine & Menu", 
-    "🛋️ Atmosphere & Ops",
+    "🥢 Cuisine & Menu Engineering", 
+    "🛋️ Atmosphere & Operations",
     "📈 Financial Projections",
-    "🚨 What-If Analysis"
+    "🎛️ What-If & Sensitivity Analysis"
 ])
 
 # =========================================================
@@ -230,85 +230,97 @@ with tab_fin:
         st.plotly_chart(fig_waterfall, use_container_width=True)
 
 # =========================================================
-# TAB 6: What-If Analysis (Pandemic Crisis)
+# TAB 6: What-If & Sensitivity Analysis (Interactive Radar & Sliders)
 # =========================================================
 with tab_whatif:
-    st.subheader("What-If Analysis: Interactive Scenario Planning")
-    st.markdown("""
-    **Concept of What-If Analysis:**  
-    Strategic decision-making relies on understanding how changes in *independent variables* (e.g., market disruptions, cost spikes) impact your *dependent variables* (e.g., cash flow, survivability). 
+    st.subheader("🎛️ Interactive What-If Scenario Simulator")
+    st.markdown("Use the advanced controls below to stress-test your restaurant concept against custom target subsets, marketing premiums, and guest capacity adjustments in real-time.")
     
-    Use the interactive levers below to model various pandemic severity scenarios and instantly observe the projected financial outcomes. This allows us to proactively build contingency plans rather than reacting passively to a crisis.
-    """)
-    st.divider()
+    # Interactive Controls Layout
+    col_w1, col_w2, col_w3 = st.columns(3)
+    with col_w1:
+        sim_location = st.multiselect("Simulate Locations", df_raw['Area_Preference'].unique().tolist(), default=df_raw['Area_Preference'].unique().tolist())
+    with col_w2:
+        sim_vibe = st.multiselect("Simulate Atmosphere Vibes", df_raw['Seating_Vibe'].unique().tolist(), default=df_raw['Seating_Vibe'].unique().tolist())
+    with col_w3:
+        marketing_boost = st.slider("Targeted Marketing Spend Multiplier (%)", 0, 100, 20, step=5)
+        
+    # Filter Data based on What-If parameters
+    sim_df = df_raw[(df_raw['Area_Preference'].isin(sim_location)) & (df_raw['Seating_Vibe'].isin(sim_vibe))]
     
-    # Base Constants
-    CASH_RESERVES = 750000 
-    FIXED_COSTS = 120000 
-    BASE_DINE_IN_REV = 250000
-    BASE_DELIVERY_REV = 80000
-    BASE_AOV = 150 
-    
-    # INTERACTIVE LEVERS (Moved inside the tab for true What-If interactivity)
-    st.markdown("### 🎛️ Adjust Scenario Levers")
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        cap_limit = st.slider("Dine-In Capacity Limit (%)", 0, 100, 30, step=10, help="Government mandated seating restriction.")
-    with col2:
-        del_surge = st.slider("Delivery Volume Surge (%)", 0, 200, 50, step=10, help="Expected spike in at-home ordering.")
-    with col3:
-        supply_mult = st.slider("Supply Cost Multiplier", 1.0, 2.0, 1.2, step=0.1, help="Inflation/scarcity cost increases.")
-    with col4:
-        del_fee = st.slider("3rd-Party Delivery Fee (%)", 10, 40, 30, step=5, help="Aggregator commission rates.")
-    
-    # Dynamic Financial Calculations
-    new_dine_in_rev = BASE_DINE_IN_REV * (cap_limit / 100.0)
-    gross_delivery_rev = BASE_DELIVERY_REV * (1 + (del_surge / 100.0))
-    net_delivery_rev = gross_delivery_rev * (1 - (del_fee / 100.0))
-    total_rev = new_dine_in_rev + net_delivery_rev
-    
-    cogs_pct = 0.30 * supply_mult
-    variable_costs = (new_dine_in_rev + gross_delivery_rev) * cogs_pct 
-    monthly_burn = (FIXED_COSTS + variable_costs) - total_rev
-    
-    delivery_margin_per_order = BASE_AOV * (1 - cogs_pct - (del_fee / 100.0))
-    bep_delivery_orders = FIXED_COSTS / delivery_margin_per_order if delivery_margin_per_order > 0 else float('inf')
-    
-    st.divider()
-    st.markdown("### 📊 Scenario Outcomes")
-    
-    # Live KPI Metrics
-    m1, m2, m3 = st.columns(3)
-    m1.metric("Dynamic Monthly Burn Rate", f"AED {monthly_burn:,.0f}" if monthly_burn > 0 else "Profitable", delta="Critical Alert" if monthly_burn > 50000 else "Stable", delta_color="inverse")
-    m2.metric("Required Delivery BEP", f"{bep_delivery_orders:,.0f} Orders/Mo" if bep_delivery_orders != float('inf') else "Unachievable", "To cover fixed costs")
-    m3.metric("Projected Cash Runway", f"{CASH_RESERVES / monthly_burn:.1f} Months" if monthly_burn > 0 else "Infinite", "Based on 750k AED Reserves")
-
-    # Live Updating Waterfall
-    with st.container(border=True):
-        fig_cf = go.Figure(go.Waterfall(
-            name="Cash Flow", 
-            orientation="v", 
-            measure=["relative", "relative", "relative", "relative", "total"], 
-            x=["New Dine-In Rev", "Net Delivery Rev", "Fixed Costs", "Variable Costs", "Net Monthly Cash Flow"], 
-            y=[new_dine_in_rev, net_delivery_rev, -FIXED_COSTS, -variable_costs, -monthly_burn], 
-            text=[f"+AED {new_dine_in_rev/1000:,.0f}k", f"+AED {net_delivery_rev/1000:,.0f}k", f"-AED {FIXED_COSTS/1000:,.0f}k", f"-AED {variable_costs/1000:,.0f}k", f"AED {-monthly_burn/1000:,.0f}k"],
-            textposition="outside",
-            connector={"line": {"color": PLATINUM}}, 
-            increasing={"marker": {"color": TEAL}}, 
-            decreasing={"marker": {"color": COPPER}}, 
-            totals={"marker": {"color": GOLD if monthly_burn <= 0 else "#8B0000"}}
+    if sim_df.empty:
+        st.warning("⚠️ Your current simulation filters are too restrictive. Please select at least one location and vibe.")
+    else:
+        # Dynamic Metric Calculations for Simulation
+        sim_respondents = len(sim_df)
+        sim_aov = sim_df['Spend_Capacity (AED)'].mean() * (1 + (marketing_boost / 300.0)) # Marketing boost lifts ticket size slightly
+        sim_monthly_rev = sim_respondents * 4 * sim_aov
+        
+        # Display Dynamic What-If KPIs
+        k1, k2, k3 = st.columns(3)
+        k1.metric("Simulated Market Reach", f"{sim_respondents} Profiles", f"{(sim_respondents/len(df_raw))*100:.1f}% of Survey")
+        k2.metric("Simulated Average Spend (AOV)", f"AED {sim_aov:.0f}", f"+{marketing_boost}% Marketing Lift")
+        k3.metric("Simulated Monthly Potential", f"AED {sim_monthly_rev/1000:,.0f}k", "Projected Yield")
+        
+        st.divider()
+        
+        # Interactive Radar Chart for Attribute Profiling
+        st.markdown("### 🌐 Concept Alignment Radar Analysis")
+        st.markdown("The radar graph below maps how strongly your selected simulation parameters align across core operational pillars compared to the baseline market.")
+        
+        # Build normalized metric scores for radar
+        categories = ['Spend Potential', 'Volume Density', 'Corporate Fit', 'Nightlife Appeal', 'Dining Preference']
+        
+        # Calculate simulation metrics vs baseline market averages
+        baseline_spend = df_raw['Spend_Capacity (AED)'].mean()
+        sim_spend_score = min(100, (sim_aov / baseline_spend) * 50)
+        sim_density_score = min(100, (sim_respondents / len(df_raw)) * 100)
+        sim_corp_score = 80 if 'Downtown Dubai' in sim_location or 'DIFC' in sim_location else 40
+        sim_night_score = 85 if 'High-Energy Bar/Lounge' in sim_vibe else 50
+        sim_dining_score = 90 if 'Intimate Fine Dining' in sim_vibe else 60
+        
+        fig_radar = go.Figure()
+        fig_radar.add_trace(go.Scatterpolar(
+            r=[sim_spend_score, sim_density_score, sim_corp_score, sim_night_score, sim_dining_score],
+            theta=categories,
+            fill='toself',
+            name='Simulated Concept',
+            line_color=GOLD
         ))
-        fig_cf.update_traces(cliponaxis=False)
-        fig_cf.update_layout(
-            title="Live Crisis Cash Flow Projection", 
-            template="plotly_dark", 
-            margin=dict(t=50, b=40, l=40, r=20),
-            yaxis_title="Cash Balance (AED)",
-            xaxis_title="Operational Metrics"
+        fig_radar.add_trace(go.Scatterpolar(
+            r=[50, 80, 70, 65, 70], # Market baseline standard
+            theta=categories,
+            fill='toself',
+            name='Market Benchmark',
+            line_color=TEAL
+        ))
+        fig_radar.update_layout(
+            polar=dict(radialaxis=dict(visible=True, range=[0, 100])),
+            template="plotly_dark",
+            margin=dict(t=40, b=40, l=40, r=40),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
         )
-        st.plotly_chart(fig_cf, use_container_width=True)
-
-    st.markdown("### 🔗 STRATEGIC CONTINGENCY IMPERATIVES")
-    
-    crisis_html = f"""<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px; margin-top:15px; align-items:stretch;"><div style="background:#111; border-top:5px solid {GOLD}; padding:25px; border-radius:10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); height:100%; box-sizing:border-box;"><div style="font-size:45px; margin-bottom:15px;">🥡</div><h4 style="color:{GOLD}; margin:0 0 10px 0; font-weight:900; font-size:1.1em;">1. DARK KITCHEN ARCHITECTURE</h4><p style="font-style:italic; color:#ccc; font-size:0.9em; margin-top:0;">Condition: Dine-In restricted &lt; 30%</p><p style="color:#eee; font-size:0.95em; line-height:1.5;"><b style="color:white;">Risk:</b> Fixed real-estate costs become a lethal liability.</p><p style="color:#eee; font-size:0.95em; line-height:1.5;"><b style="color:white;">Action:</b> Negotiate a clause to sub-lease kitchen space to a secondary virtual brand to offset the <strong style="color:{GOLD};">{FIXED_COSTS/1000:,.0f}k AED fixed costs</strong>.</p></div><div style="background:#111; border-top:5px solid {COPPER}; padding:25px; border-radius:10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); height:100%; box-sizing:border-box;"><div style="font-size:45px; margin-bottom:15px;">🛵</div><h4 style="color:{COPPER}; margin:0 0 10px 0; font-weight:900; font-size:1.1em;">2. MARGIN SHIELDING</h4><p style="font-style:italic; color:#ccc; font-size:0.9em; margin-top:0;">Target: {del_fee}% Commission Mitigation</p><p style="color:#eee; font-size:0.95em; line-height:1.5;"><b style="color:white;">Challenge:</b> The current model requires <strong style="color:{COPPER};">{bep_delivery_orders:,.0f} delivery orders</strong> just to break even.</p><p style="color:#eee; font-size:0.95em; line-height:1.5;"><b style="color:white;">Action:</b> Engineer a 'Delivery-Only' menu subset using lower-cost ingredients (buffering the <strong style="color:{COPPER};">{supply_mult}x supply multiplier</strong>) to protect the base <strong style="color:{COPPER};">{BASE_AOV:,.0f} AED avg order value</strong>.</p></div><div style="background:#111; border-top:5px solid {TEAL}; padding:25px; border-radius:10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); height:100%; box-sizing:border-box;"><div style="font-size:45px; margin-bottom:15px;">🏦</div><h4 style="color:{TEAL}; margin:0 0 10px 0; font-weight:900; font-size:1.1em;">3. LIQUIDITY PRESERVATION</h4><p style="font-style:italic; color:#ccc; font-size:0.9em; margin-top:0;">Status: Capital Protection</p><p style="color:#eee; font-size:0.95em; line-height:1.5;"><b style="color:white;">Warning:</b> Rapid cash hemorrhage occurs if COGS spikes with platform fees.</p><p style="color:#eee; font-size:0.95em; line-height:1.5;"><b style="color:white;">Action:</b> Secure a rolling credit facility equalling <strong style="color:{TEAL};">3 months of OPEX</strong> prior to launch.</p></div></div>"""
-    st.markdown(crisis_html, unsafe_allow_html=True)
+        
+        with st.container(border=True):
+            st.plotly_chart(fig_radar, use_container_width=True)
+            
+        # Professional Analytical Synthesis Cards
+        st.markdown("### 💡 Professional Scenario Insights")
+        
+        insight_html = f"""
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px; margin-top:15px; align-items:stretch;">
+            <div style="background:#111; border-top:5px solid {GOLD}; padding:25px; border-radius:10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                <h4 style="color:{GOLD}; margin-top:0; font-weight:900;">🎯 Audience Viability</h4>
+                <p style="color:#eee; font-size:0.95em; line-height:1.6;">Your selected configuration captures <b>{sim_respondents} active survey respondents</b>. The spend capacity index sits at <b>AED {sim_aov:.0f}</b>, indicating strong unit economic resilience against standard operational overheads.</p>
+            </div>
+            <div style="background:#111; border-top:5px solid {COPPER}; padding:25px; border-radius:10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                <h4 style="color:{COPPER}; margin-top:0; font-weight:900;">⚠️ Sensitivity Warning</h4>
+                <p style="color:#eee; font-size:0.95em; line-height:1.6;">Narrowing location parameters too aggressively increases customer acquisition costs (CAC). Ensure marketing expenditure multipliers do not outpace the <b>AED {sim_monthly_rev/1000:,.0f}k monthly revenue ceiling</b> shown above.</p>
+            </div>
+            <div style="background:#111; border-top:5px solid {TEAL}; padding:25px; border-radius:10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                <h4 style="color:{TEAL}; margin-top:0; font-weight:900;">🚀 Strategic Recommendation</h4>
+                <p style="color:#eee; font-size:0.95em; line-height:1.6;">Based on the radar symmetry, balancing your vibe selection between lounge and dining elements optimizes both early-evening food sales and late-night beverage margins.</p>
+            </div>
+        </div>
+        """
+        st.markdown(insight_html, unsafe_allow_html=True)
