@@ -66,14 +66,6 @@ if df.empty:
     st.error("No survey data matches the selected filters.")
     st.stop()
 
-st.sidebar.divider()
-st.sidebar.header("🚨 Crisis Stress-Test Variables")
-st.sidebar.markdown("Adjust these inputs to power the Crisis Model (Tab 6).")
-cap_limit = st.sidebar.slider("Dine-In Capacity Limit (%)", 0, 100, 30, step=10)
-del_surge = st.sidebar.slider("Delivery Volume Surge (%)", 0, 200, 50, step=10)
-supply_mult = st.sidebar.slider("Supply Chain Cost Multiplier", 1.0, 2.0, 1.2, step=0.1)
-del_fee = st.sidebar.slider("3rd-Party Delivery Fee (%)", 10, 40, 30, step=5)
-
 # ---------------------------------------------------------
 # 4. TAB ROUTING
 # ---------------------------------------------------------
@@ -85,7 +77,7 @@ tab_bp, tab_demo, tab_menu, tab_ops, tab_fin, tab_crisis = st.tabs([
     "🥢 Cuisine & Menu Engineering", 
     "🛋️ Atmosphere & Operations",
     "📈 Financial Projections",
-    "🚨 Crisis Stress-Test"
+    "🚨 Pandemic Crisis Model"
 ])
 
 # =========================================================
@@ -238,17 +230,24 @@ with tab_fin:
         st.plotly_chart(fig_waterfall, use_container_width=True)
 
 # =========================================================
-# TAB 6: Pandemic Stress-Test (6-Month Crisis Model)
+# TAB 6: Pandemic Stress-Test (Crisis Model)
 # =========================================================
 with tab_crisis:
     st.subheader("Financial Contagion & Survival Stress-Test")
-    st.markdown("Use the variables in the left sidebar to model a severe 6-month operational disruption.")
+    st.markdown("Model a severe 6-month operational disruption occurring post-launch.")
     
     CASH_RESERVES = 750000 
     FIXED_COSTS = 120000 
     BASE_DINE_IN_REV = 250000
     BASE_DELIVERY_REV = 80000
     BASE_AOV = 150 
+    
+    st.sidebar.markdown("---")
+    st.sidebar.header("Crisis Variables")
+    cap_limit = st.sidebar.slider("Dine-In Capacity Limit (%)", 0, 100, 30, step=10)
+    del_surge = st.sidebar.slider("Delivery Volume Surge (%)", 0, 200, 50, step=10)
+    supply_mult = st.sidebar.slider("Supply Chain Cost Multiplier", 1.0, 2.0, 1.2, step=0.1)
+    del_fee = st.sidebar.slider("3rd-Party Delivery Fee (%)", 10, 40, 30, step=5)
     
     new_dine_in_rev = BASE_DINE_IN_REV * (cap_limit / 100.0)
     gross_delivery_rev = BASE_DELIVERY_REV * (1 + (del_surge / 100.0))
@@ -262,54 +261,31 @@ with tab_crisis:
     delivery_margin_per_order = BASE_AOV * (1 - cogs_pct - (del_fee / 100.0))
     bep_delivery_orders = FIXED_COSTS / delivery_margin_per_order if delivery_margin_per_order > 0 else float('inf')
     
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Monthly Burn Rate", f"AED {monthly_burn:,.0f}" if monthly_burn > 0 else "Profitable")
-    c2.metric("Cash Runway", f"{CASH_RESERVES / monthly_burn:.1f} Months" if monthly_burn > 0 else "Infinite")
-    c3.metric("Delivery Break-Even", f"{bep_delivery_orders:,.0f} Orders/Mo" if bep_delivery_orders != float('inf') else "Unachievable")
-    
-    st.divider()
-    
-    col_w, col_l = st.columns(2)
-    
-    with col_w:
-        with st.container(border=True):
-            fig_cf = go.Figure(go.Waterfall(
-                name="Cash Flow", 
-                orientation="v", 
-                measure=["relative", "relative", "relative", "relative", "total"], 
-                x=["New Dine-In Rev", "Net Delivery Rev", "Fixed Costs", "Variable Costs", "Net Monthly Cash Flow"], 
-                y=[new_dine_in_rev, net_delivery_rev, -FIXED_COSTS, -variable_costs, -monthly_burn], 
-                text=[f"+AED {new_dine_in_rev/1000:,.0f}k", f"+AED {net_delivery_rev/1000:,.0f}k", f"-AED {FIXED_COSTS/1000:,.0f}k", f"-AED {variable_costs/1000:,.0f}k", f"AED {-monthly_burn/1000:,.0f}k"],
-                textposition="outside",
-                connector={"line": {"color": PLATINUM}}, 
-                increasing={"marker": {"color": TEAL}}, 
-                decreasing={"marker": {"color": COPPER}}, 
-                totals={"marker": {"color": GOLD if monthly_burn <= 0 else "#8B0000"}}
-            ))
-            fig_cf.update_traces(cliponaxis=False)
-            fig_cf.update_layout(
-                title="Monthly Crisis Cash Flow", 
-                template="plotly_dark", 
-                margin=dict(t=50, b=40, l=40, r=20),
-                yaxis_title="Cash Balance (AED)"
-            )
-            st.plotly_chart(fig_cf, use_container_width=True)
-            
-    with col_l:
-        with st.container(border=True):
-            months = [f"Month {i}" for i in range(7)]
-            runway_data = [CASH_RESERVES - (max(monthly_burn, 0) * i) for i in range(7)]
-            
-            fig_runway = px.line(
-                x=months, y=runway_data, markers=True, text=[f"{val/1000:.0f}k" for val in runway_data],
-                title="Cash Reserves Trajectory", template="plotly_dark"
-            )
-            fig_runway.update_traces(line_color=COPPER, textposition="top center")
-            fig_runway.add_hline(y=0, line_dash="dash", line_color="red", annotation_text="Bankruptcy Line")
-            fig_runway.update_layout(margin=dict(t=50, b=40, l=40, r=20), xaxis_title="Timeline", yaxis_title="Cash Balance (AED)")
-            st.plotly_chart(fig_runway, use_container_width=True)
+    with st.container(border=True):
+        fig_cf = go.Figure(go.Waterfall(
+            name="Cash Flow", 
+            orientation="v", 
+            measure=["relative", "relative", "relative", "relative", "total"], 
+            x=["New Dine-In Rev", "Net Delivery Rev", "Fixed Costs", "Variable Costs", "Net Monthly Cash Flow"], 
+            y=[new_dine_in_rev, net_delivery_rev, -FIXED_COSTS, -variable_costs, -monthly_burn], 
+            text=[f"+AED {new_dine_in_rev/1000:,.0f}k", f"+AED {net_delivery_rev/1000:,.0f}k", f"-AED {FIXED_COSTS/1000:,.0f}k", f"-AED {variable_costs/1000:,.0f}k", f"AED {-monthly_burn/1000:,.0f}k"],
+            textposition="outside",
+            connector={"line": {"color": PLATINUM}}, 
+            increasing={"marker": {"color": TEAL}}, 
+            decreasing={"marker": {"color": COPPER}}, 
+            totals={"marker": {"color": GOLD if monthly_burn <= 0 else "#8B0000"}}
+        ))
+        fig_cf.update_traces(cliponaxis=False)
+        fig_cf.update_layout(
+            title="Monthly Crisis Cash Flow", 
+            template="plotly_dark", 
+            margin=dict(t=50, b=40, l=40, r=20),
+            yaxis_title="Cash Balance (AED)",
+            xaxis_title="Operational Metrics"
+        )
+        st.plotly_chart(fig_cf, use_container_width=True)
 
-    st.markdown("### 🔗 Strategic Contingency Imperatives")
+    st.markdown("### 🔗 STRATEGIC CONTINGENCY IMPERATIVES")
     
-    crisis_html = f"""<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px; margin-top:15px; align-items:stretch;"><div style="background:#111; border-left:4px solid {GOLD}; padding:20px; border-radius:8px; height:100%; box-sizing:border-box;"><div style="display:flex; align-items:center; gap:15px; margin-bottom:10px;"><div style="font-size:35px;">🥡</div><h4 style="color:{GOLD}; margin:0; font-weight:900; line-height:1.2; font-size:1.1em;">1. DARK KITCHEN ARCHITECTURE</h4></div><p style="font-style:italic; color:#ccc; font-size:0.9em; margin-top:0;">Condition: Dine-In restricted &lt; 30%</p><p style="color:#eee; font-size:0.95em; line-height:1.5;"><b style="color:white;">Risk:</b> Fixed real-estate costs become a lethal liability.</p><p style="color:#eee; font-size:0.95em; line-height:1.5; margin-bottom:0;"><b style="color:white;">Action:</b> Negotiate a clause to sub-lease kitchen space to a secondary virtual brand to offset the <strong style="color:{GOLD};">{FIXED_COSTS/1000:,.0f}k AED fixed costs</strong>.</p></div><div style="background:#111; border-left:4px solid {COPPER}; padding:20px; border-radius:8px; height:100%; box-sizing:border-box;"><div style="display:flex; align-items:center; gap:15px; margin-bottom:10px;"><div style="font-size:35px;">🛵</div><h4 style="color:{COPPER}; margin:0; font-weight:900; line-height:1.2; font-size:1.1em;">2. MARGIN SHIELDING</h4></div><p style="font-style:italic; color:#ccc; font-size:0.9em; margin-top:0;">Target: {del_fee}% Commission Mitigation</p><p style="color:#eee; font-size:0.95em; line-height:1.5;"><b style="color:white;">Challenge:</b> The current model requires <strong style="color:{COPPER};">{bep_delivery_orders:,.0f} delivery orders</strong> just to break even.</p><p style="color:#eee; font-size:0.95em; line-height:1.5; margin-bottom:0;"><b style="color:white;">Action:</b> Engineer a 'Delivery-Only' menu subset using lower-cost ingredients (buffering the <strong style="color:{COPPER};">{supply_mult}x supply multiplier</strong>) to protect the base <strong style="color:{COPPER};">{BASE_AOV:,.0f} AED average order value</strong>.</p></div><div style="background:#111; border-left:4px solid {TEAL}; padding:20px; border-radius:8px; height:100%; box-sizing:border-box;"><div style="display:flex; align-items:center; gap:15px; margin-bottom:10px;"><div style="font-size:35px;">🏦</div><h4 style="color:{TEAL}; margin:0; font-weight:900; line-height:1.2; font-size:1.1em;">3. LIQUIDITY PRESERVATION</h4></div><p style="font-style:italic; color:#ccc; font-size:0.9em; margin-top:0;">Status: Capital Protection</p><p style="color:#eee; font-size:0.95em; line-height:1.5;"><b style="color:white;">Warning:</b> Rapid cash hemorrhage occurs if COGS spikes simultaneously with platform fees.</p><p style="color:#eee; font-size:0.95em; line-height:1.5; margin-bottom:0;"><b style="color:white;">Action:</b> Secure a rolling credit facility equalling <strong style="color:{TEAL};">3 months of OPEX</strong> prior to launch, rather than scrambling for equity dilution post-crisis.</p></div></div>"""
+    crisis_html = f"""<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px; margin-top:15px; align-items:stretch;"><div style="background:#111; border-top:5px solid {GOLD}; padding:25px; border-radius:10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); height:100%; box-sizing:border-box;"><div style="font-size:45px; margin-bottom:15px;">🥡</div><h4 style="color:{GOLD}; margin:0 0 10px 0; font-weight:900; font-size:1.1em;">1. DARK KITCHEN ARCHITECTURE</h4><p style="font-style:italic; color:#ccc; font-size:0.9em; margin-top:0;">Condition: Dine-In restricted &lt; 30%</p><p style="color:#eee; font-size:0.95em; line-height:1.5;"><b style="color:white;">Risk:</b> Fixed real-estate costs become a lethal liability.</p><p style="color:#eee; font-size:0.95em; line-height:1.5;"><b style="color:white;">Action:</b> Negotiate a clause to sub-lease kitchen space to a secondary virtual brand to offset the <strong style="color:{GOLD};">{FIXED_COSTS/1000:,.0f}k AED fixed costs</strong>.</p></div><div style="background:#111; border-top:5px solid {COPPER}; padding:25px; border-radius:10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); height:100%; box-sizing:border-box;"><div style="font-size:45px; margin-bottom:15px;">🛵</div><h4 style="color:{COPPER}; margin:0 0 10px 0; font-weight:900; font-size:1.1em;">2. MARGIN SHIELDING</h4><p style="font-style:italic; color:#ccc; font-size:0.9em; margin-top:0;">Target: {del_fee}% Commission Mitigation</p><p style="color:#eee; font-size:0.95em; line-height:1.5;"><b style="color:white;">Challenge:</b> The current model requires <strong style="color:{COPPER};">{bep_delivery_orders:,.0f} delivery orders</strong> just to break even.</p><p style="color:#eee; font-size:0.95em; line-height:1.5;"><b style="color:white;">Action:</b> Engineer a 'Delivery-Only' menu subset using lower-cost ingredients (buffering the <strong style="color:{COPPER};">{supply_mult}x supply multiplier</strong>) to protect the base <strong style="color:{COPPER};">{BASE_AOV:,.0f} AED avg order value</strong>.</p></div><div style="background:#111; border-top:5px solid {TEAL}; padding:25px; border-radius:10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); height:100%; box-sizing:border-box;"><div style="font-size:45px; margin-bottom:15px;">🏦</div><h4 style="color:{TEAL}; margin:0 0 10px 0; font-weight:900; font-size:1.1em;">3. LIQUIDITY PRESERVATION</h4><p style="font-style:italic; color:#ccc; font-size:0.9em; margin-top:0;">Status: Capital Protection</p><p style="color:#eee; font-size:0.95em; line-height:1.5;"><b style="color:white;">Warning:</b> Rapid cash hemorrhage occurs if COGS spikes with platform fees.</p><p style="color:#eee; font-size:0.95em; line-height:1.5;"><b style="color:white;">Action:</b> Secure a rolling credit facility equalling <strong style="color:{TEAL};">3 months of OPEX</strong> prior to launch.</p></div></div>"""
     st.markdown(crisis_html, unsafe_allow_html=True)
