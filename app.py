@@ -155,12 +155,10 @@ with tab2:
     # 1. Association Rules (Apriori)
     st.markdown("### 🛒 Association Rules (Menu & Demographic Synergies)")
     
-    # Prepare Data for Apriori (One-Hot Encode Demographics + Cuisines)
     ohe_demo = pd.get_dummies(df[['Area', 'Age_Group']])
     ohe_cuisines = df['Cuisines_Enjoyed'].str.get_dummies(sep=', ')
     basket = pd.concat([ohe_demo, ohe_cuisines], axis=1).astype(bool)
     
-    # Run FP/Apriori
     frequent_itemsets = apriori(basket, min_support=0.1, use_colnames=True)
     if not frequent_itemsets.empty:
         rules = association_rules(frequent_itemsets, metric="lift", min_threshold=1.2)
@@ -198,23 +196,58 @@ with tab2:
     )
     st.plotly_chart(fig_cluster, use_container_width=True)
     
-    # Text Personas based on cluster centers
+    # --- REDESIGNED PERSONA CARDS ---
     st.markdown("#### Persona Synthesis")
+    
+    # Standard String for CSS (No f-string bracket conflicts)
+    persona_css = """
+    <style>
+        .persona-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 10px; }
+        .persona-card { background-color: #111111; padding: 20px; border-radius: 10px; box-shadow: inset 0 0 10px rgba(255,255,255,0.05); }
+        .persona-card h4 { margin-top: 0; font-weight: 900; font-size: 1.2em; text-transform: uppercase; }
+        .persona-stats { font-size: 0.95em; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #333; color: #E5E4E2; }
+        .persona-stats b { color: white; }
+        .persona-body { font-size: 0.95em; line-height: 1.5; color: #E5E4E2; }
+        
+        .p-teal { border: 2px solid #006666; } .p-teal h4 { color: #006666; } .p-teal strong { color: #006666; }
+        .p-gold { border: 2px solid #D4AF37; } .p-gold h4 { color: #D4AF37; } .p-gold strong { color: #D4AF37; }
+        .p-plat { border: 2px solid #E5E4E2; } .p-plat h4 { color: #E5E4E2; } .p-plat strong { color: #E5E4E2; }
+    </style>
+    """
+    
+    persona_html = '<div class="persona-grid">'
     cluster_means = df.groupby('Cluster_Name')[features].mean()
     
     for c_name, row in cluster_means.iterrows():
         if c_name == 'Value Regulars':
-            color = TEAL
+            c_class = "p-teal"
             desc = "Consistent baseline revenue. They visit frequently but manage their check size carefully."
         elif c_name == 'High-Roller Foodies':
-            color = GOLD
+            c_class = "p-gold"
             desc = "The profit engines. Older demographic, highly inelastic to price, order premium fusion items."
         else:
-            color = PLATINUM
+            c_class = "p-plat"
             desc = "Curiosity-driven visitors. They come in once a month for the 'experience' but aren't anchored to the brand."
             
-        st.info(f"**{c_name}**: Avg Age: {int(row['Age'])} | Avg Spend: AED {int(row['Spend (AED)'])} | Visits/Mo: {row['Visit_Freq_Monthly']:.1f}. \n\n*Strategic Takeaway:* {desc}")
-
+        # F-string for dynamic variables
+        persona_html += f"""
+        <div class="persona-card {c_class}">
+            <h4>{c_name}</h4>
+            <div class="persona-stats">
+                <div><b>Avg Age:</b> {int(row['Age'])}</div>
+                <div><b>Avg Spend:</b> AED {int(row['Spend (AED)'])}</div>
+                <div><b>Visits/Mo:</b> {row['Visit_Freq_Monthly']:.1f}</div>
+            </div>
+            <div class="persona-body">
+                <strong>Strategic Takeaway:</strong><br>{desc}
+            </div>
+        </div>
+        """
+        
+    persona_html += '</div>'
+    
+    # Render CSS and HTML together safely
+    st.markdown(persona_css + persona_html, unsafe_allow_html=True)
 
 # =========================================================
 # TAB 3: Standard Price Elasticity (What-If Analysis)
@@ -267,103 +300,104 @@ with tab3:
 
 
 # =========================================================
-# TAB 4: Pandemic Stress-Test (6-Month Crisis Model)
+# TAB 2: Machine Learning & Persona Mining
 # =========================================================
-with tab4:
-    st.subheader("Financial Contagion & Survival Stress-Test")
-    st.markdown("Model a severe 6-month operational disruption. Adjust the parameters below to determine survivability.")
+with tab2:
+    st.subheader("Algorithmic Persona Generation")
     
-    # Baseline Financials (Hardcoded for model context)
-    CASH_RESERVES = 750000 
-    FIXED_COSTS = 120000 
-    BASE_DINE_IN_REV = 250000
-    BASE_DELIVERY_REV = 80000
-    BASE_AOV = 150 # Average Order Value AED
+    # 1. Association Rules (Apriori)
+    st.markdown("### 🛒 Association Rules (Menu & Demographic Synergies)")
     
-    st.sidebar.markdown("---")
-    st.sidebar.header("Crisis Variables")
-    cap_limit = st.sidebar.slider("Dine-In Capacity Limit (%)", 0, 100, 30, step=10)
-    del_surge = st.sidebar.slider("Delivery Volume Surge (%)", 0, 200, 50, step=10)
-    supply_mult = st.sidebar.slider("Supply Chain Cost Multiplier", 1.0, 2.0, 1.2, step=0.1)
-    del_fee = st.sidebar.slider("3rd-Party Delivery Fee (%)", 10, 40, 30, step=5)
+    ohe_demo = pd.get_dummies(df[['Area', 'Age_Group']])
+    ohe_cuisines = df['Cuisines_Enjoyed'].str.get_dummies(sep=', ')
+    basket = pd.concat([ohe_demo, ohe_cuisines], axis=1).astype(bool)
     
-    # Dynamic Calculations
-    new_dine_in_rev = BASE_DINE_IN_REV * (cap_limit / 100.0)
-    gross_delivery_rev = BASE_DELIVERY_REV * (1 + (del_surge / 100.0))
-    net_delivery_rev = gross_delivery_rev * (1 - (del_fee / 100.0))
-    total_rev = new_dine_in_rev + net_delivery_rev
+    frequent_itemsets = apriori(basket, min_support=0.1, use_colnames=True)
+    if not frequent_itemsets.empty:
+        rules = association_rules(frequent_itemsets, metric="lift", min_threshold=1.2)
+        if not rules.empty:
+            rules['antecedents'] = rules['antecedents'].apply(lambda x: ', '.join(list(x)))
+            rules['consequents'] = rules['consequents'].apply(lambda x: ', '.join(list(x)))
+            rules = rules.sort_values('lift', ascending=False).head(10)
+            
+            display_rules = rules[['antecedents', 'consequents', 'support', 'confidence', 'lift']]
+            st.dataframe(display_rules.style.format({'support': '{:.2f}', 'confidence': '{:.2f}', 'lift': '{:.2f}'}), use_container_width=True)
+        else:
+            st.info("No strong association rules found with lift > 1.2.")
+    else:
+        st.info("Not enough data to calculate support thresholds.")
+        
+    st.divider()
     
-    # COGS is historically 30%, but impacted by supply chain multiplier
-    cogs_pct = 0.30 * supply_mult
-    variable_costs = (new_dine_in_rev + gross_delivery_rev) * cogs_pct 
+    # 2. K-Means Clustering
+    st.markdown("### 🧬 Customer Segmentation (K-Means)")
     
-    monthly_burn = (FIXED_COSTS + variable_costs) - total_rev
-    cash_runway = CASH_RESERVES / monthly_burn if monthly_burn > 0 else float('inf')
+    features = ['Spend (AED)', 'Visit_Freq_Monthly', 'Age']
+    X = df[features].dropna()
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
     
-    # Delivery BEP Calculation (How many delivery orders to cover fixed costs assuming ZERO dine-in)
-    delivery_margin_per_order = BASE_AOV * (1 - cogs_pct - (del_fee / 100.0))
-    bep_delivery_orders = FIXED_COSTS / delivery_margin_per_order if delivery_margin_per_order > 0 else float('inf')
+    kmeans = KMeans(n_clusters=3, random_state=42)
+    df.loc[X.index, 'Cluster'] = kmeans.fit_predict(X_scaled)
+    df['Cluster_Name'] = df['Cluster'].map({0: 'Value Regulars', 1: 'High-Roller Foodies', 2: 'Infrequent Explorers'})
     
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Monthly Burn Rate", f"AED {monthly_burn:,.0f}" if monthly_burn > 0 else "Profitable")
-    c2.metric("Cash Runway", f"{cash_runway:.1f} Months" if monthly_burn > 0 else "Infinite")
-    c3.metric("Delivery Break-Even", f"{bep_delivery_orders:,.0f} Orders/Mo" if bep_delivery_orders != float('inf') else "Unachievable")
-    
-    # Monthly Cash Flow Waterfall
-    st.markdown("### Monthly Crisis Cash Flow")
-    fig_cf = go.Figure(go.Waterfall(
-        name="Cash Flow", orientation="v",
-        measure=["relative", "relative", "relative", "relative", "total"],
-        x=["New Dine-In Rev", "Net Delivery Rev", "Fixed Costs", "Variable Costs (COGS)", "Net Monthly Cash Flow"],
-        text=[f"AED {new_dine_in_rev/1000:.0f}k", f"AED {net_delivery_rev/1000:.0f}k", 
-              f"-AED {FIXED_COSTS/1000:.0f}k", f"-AED {variable_costs/1000:.0f}k", f"AED {-monthly_burn/1000:.0f}k"],
-        y=[new_dine_in_rev, net_delivery_rev, -FIXED_COSTS, -variable_costs, -monthly_burn],
-        textposition="outside",
-        connector={"line": {"color": PLATINUM}},
-        increasing={"marker": {"color": TEAL}},
-        decreasing={"marker": {"color": COPPER}},
-        totals={"marker": {"color": GOLD if monthly_burn <= 0 else "#8B0000"}}
-    ))
-    fig_cf.update_layout(template="plotly_dark")
-    st.plotly_chart(fig_cf, use_container_width=True)
-    
-    # Runway Depletion Curve
-    st.markdown("### 6-Month Liquidity Depletion Curve")
-    months = [f"Month {i}" for i in range(7)]
-    runway_data = [CASH_RESERVES - (max(monthly_burn, 0) * i) for i in range(7)]
-    
-    fig_runway = px.line(
-        x=months, y=runway_data, markers=True, text=[f"{val/1000:.0f}k" for val in runway_data],
-        title="Cash Reserves Trajectory", template="plotly_dark"
+    fig_cluster = px.scatter_3d(
+        df, x='Age', y='Spend (AED)', z='Visit_Freq_Monthly',
+        color='Cluster_Name', color_discrete_sequence=[GOLD, TEAL, PLATINUM],
+        title="3D Behavioral Topography", template="plotly_dark",
+        opacity=0.7
     )
-    fig_runway.update_traces(line_color=COPPER, textposition="top center")
-    fig_runway.add_hline(y=0, line_dash="dash", line_color="red", annotation_text="Bankruptcy Line")
-    fig_runway.update_layout(xaxis_title="Timeline", yaxis_title="Cash Balance (AED)")
-    st.plotly_chart(fig_runway, use_container_width=True)
-
-    # Cleaned HTML string (No f-prefix needed since values are hardcoded)
-    cards_html = """
-    <div class="crisis-grid">
-        <!-- CARD 2: Margin Shielding -->
-        <div class="crisis-card card-2">
-            <h4><span>2.</span> MARGIN SHIELDING</h4>
-            <p class="crisis-subtext">Target: 30% Commission Mitigation</p>
-            <div class="crisis-body">
-                <p><b>Challenge:</b> Current model requires <strong class="value">2,353 delivery orders</strong> just to break even.</p>
-                <p><b>Action:</b> Engineer a <strong>'Delivery-Only' menu</strong> subset using lower-cost ingredients (buffering the <strong>1.2x supply multiplier</strong>) to protect the base <strong class="value">150 AED average order value</strong>.</p>
-            </div>
-        </div>
-
-        <!-- CARD 3: Liquidity Preservation Protocol -->
-        <div class="crisis-card card-3">
-            <h4><span>3.</span> LIQUIDITY PRESERVATION</h4>
-            <p class="crisis-subtext">Status: Capital Protection</p>
-            <div class="crisis-body">
-                <p><b>Warning:</b> COGS spikes and platform fees cause rapid cash hemorrhage.</p>
-                <p><b>Action:</b> Secure a rolling credit facility equalling <strong class="value">3 months of OPEX</strong> before launch, to avoid equity dilution post-crisis.</p>
-            </div>
-        </div>
-    </div>
+    st.plotly_chart(fig_cluster, use_container_width=True)
+    
+    # --- REDESIGNED PERSONA CARDS ---
+    st.markdown("#### Persona Synthesis")
+    
+    # Standard String for CSS (No f-string bracket conflicts)
+    persona_css = """
+    <style>
+        .persona-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 10px; }
+        .persona-card { background-color: #111111; padding: 20px; border-radius: 10px; box-shadow: inset 0 0 10px rgba(255,255,255,0.05); }
+        .persona-card h4 { margin-top: 0; font-weight: 900; font-size: 1.2em; text-transform: uppercase; }
+        .persona-stats { font-size: 0.95em; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #333; color: #E5E4E2; }
+        .persona-stats b { color: white; }
+        .persona-body { font-size: 0.95em; line-height: 1.5; color: #E5E4E2; }
+        
+        .p-teal { border: 2px solid #006666; } .p-teal h4 { color: #006666; } .p-teal strong { color: #006666; }
+        .p-gold { border: 2px solid #D4AF37; } .p-gold h4 { color: #D4AF37; } .p-gold strong { color: #D4AF37; }
+        .p-plat { border: 2px solid #E5E4E2; } .p-plat h4 { color: #E5E4E2; } .p-plat strong { color: #E5E4E2; }
+    </style>
     """
     
-    st.markdown(cards_html, unsafe_allow_html=True)
+    persona_html = '<div class="persona-grid">'
+    cluster_means = df.groupby('Cluster_Name')[features].mean()
+    
+    for c_name, row in cluster_means.iterrows():
+        if c_name == 'Value Regulars':
+            c_class = "p-teal"
+            desc = "Consistent baseline revenue. They visit frequently but manage their check size carefully."
+        elif c_name == 'High-Roller Foodies':
+            c_class = "p-gold"
+            desc = "The profit engines. Older demographic, highly inelastic to price, order premium fusion items."
+        else:
+            c_class = "p-plat"
+            desc = "Curiosity-driven visitors. They come in once a month for the 'experience' but aren't anchored to the brand."
+            
+        # F-string for dynamic variables
+        persona_html += f"""
+        <div class="persona-card {c_class}">
+            <h4>{c_name}</h4>
+            <div class="persona-stats">
+                <div><b>Avg Age:</b> {int(row['Age'])}</div>
+                <div><b>Avg Spend:</b> AED {int(row['Spend (AED)'])}</div>
+                <div><b>Visits/Mo:</b> {row['Visit_Freq_Monthly']:.1f}</div>
+            </div>
+            <div class="persona-body">
+                <strong>Strategic Takeaway:</strong><br>{desc}
+            </div>
+        </div>
+        """
+        
+    persona_html += '</div>'
+    
+    # Render CSS and HTML together safely
+    st.markdown(persona_css + persona_html, unsafe_allow_html=True)
