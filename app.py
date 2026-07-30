@@ -86,11 +86,12 @@ if df.empty:
 # ---------------------------------------------------------
 st.title("🍽️ Dubai Fusion Restaurant: Strategic Intelligence")
 
-tab1, tab2, tab3, tab4 = st.tabs([
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📊 Demographics & Menu Strategy", 
     "🤖 ML & Persona Mining", 
     "📈 Price Elasticity", 
-    "🚨 Pandemic Stress-Test"
+    "🚨 Pandemic Stress-Test",
+    "📑 Strategic Business Plan"
 ])
 
 # =========================================================
@@ -375,3 +376,52 @@ with tab4:
     crisis_html = f"""<div class="crisis-grid"><div class="crisis-card card-1"><h4>1. DARK KITCHEN ARCHITECTURE</h4><p class="crisis-subtext">Condition: Dine-In restricted < 30%</p><div class="crisis-body"><p><b>Risk:</b> Fixed real-estate costs become a lethal liability.</p><p><b>Action:</b> Negotiate a clause to sub-lease kitchen space to a secondary virtual brand to offset the <strong>{FIXED_COSTS/1000:,.0f}k AED fixed costs</strong>.</p></div></div><div class="crisis-card card-2"><h4>2. MARGIN SHIELDING</h4><p class="crisis-subtext">Target: {del_fee}% Commission Mitigation</p><div class="crisis-body"><p><b>Challenge:</b> Current model requires <strong>{bep_delivery_orders:,.0f} delivery orders</strong> just to break even.</p><p><b>Action:</b> Engineer a 'Delivery-Only' menu subset using lower-cost ingredients (buffering the <strong>{supply_mult}x supply multiplier</strong>) to protect the base <strong>{BASE_AOV:,.0f} AED avg order value</strong>.</p></div></div><div class="crisis-card card-3"><h4>3. LIQUIDITY PRESERVATION</h4><p class="crisis-subtext">Status: Capital Protection</p><div class="crisis-body"><p><b>Warning:</b> COGS spikes and platform fees cause rapid cash hemorrhage.</p><p><b>Action:</b> Secure a rolling credit facility equalling <strong>3 months of OPEX</strong> before launch, to avoid equity dilution post-crisis.</p></div></div></div>"""
     
     st.markdown(crisis_css + crisis_html, unsafe_allow_html=True)
+
+
+# =========================================================
+# TAB 5: Strategic Business Plan
+# =========================================================
+with tab5:
+    st.subheader("Enterprise Blueprint & Investor Pitch")
+    
+    bp_css = """
+    <style>
+        .bp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-top: 15px; margin-bottom: 30px; }
+        .bp-card { background-color: #111111; padding: 25px; border-radius: 10px; box-shadow: inset 0 0 10px rgba(255,255,255,0.05); border-left: 4px solid #D4AF37; }
+        .bp-card h4 { margin-top: 0; color: #D4AF37; font-weight: 900; font-size: 1.15em; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .bp-body { color: #E5E4E2; line-height: 1.6; font-size: 0.95em; }
+        .bp-body b { color: white; }
+        .bp-body ul { padding-left: 20px; margin-top: 10px; }
+        
+        .timeline-container { border-left: 3px solid #006666; padding-left: 20px; margin-top: 20px; }
+        .timeline-step { margin-bottom: 20px; position: relative; }
+        .timeline-step::before { content: ''; position: absolute; left: -27px; top: 5px; width: 11px; height: 11px; background-color: #006666; border-radius: 50%; border: 2px solid #111111; }
+        .timeline-step h5 { color: #006666; margin: 0 0 5px 0; font-weight: bold; font-size: 1.1em; }
+        .timeline-content { background-color: #111111; padding: 15px; border-radius: 8px; border: 1px solid #333; color: #E5E4E2; font-size: 0.95em; }
+    </style>
+    """
+    
+    # Core Strategy Cards (No blank lines inside HTML)
+    strategy_html = """<div class="bp-grid"><div class="bp-card"><h4>1. Executive Summary</h4><div class="bp-body"><p>Operated at the intersection of hospitality and corporate scaling, this venture utilizes advanced AI and predictive analytics to disrupt Dubai's fusion culinary space. Positioned for strategic business leadership and rapid expansion, our model guarantees premium dining experiences backed by highly optimized, data-driven unit economics.</p></div></div><div class="bp-card"><h4>2. Market Analysis</h4><div class="bp-body"><p>Targeting the lucrative intersection of <b>High-Roller Foodies</b> (high LTV, inelastic) and <b>Value Regulars</b> (consistent baseline revenue). Located strategically in high-density corporate and residential hubs (Downtown Dubai, Dubai Marina), capitalizing on the demand for hybrid experiential dining.</p></div></div><div class="bp-card"><h4>3. Pricing Strategy</h4><div class="bp-body"><p><b>Dynamic & Value-Based:</b> Leveraging standard price elasticity algorithms to maintain a 15% premium on anchor fusion dishes while offering high-margin, low-barrier entry items to secure volume. Algorithmic adjustments track supply chain multipliers to fiercely protect the base 150 AED Average Order Value.</p></div></div><div class="bp-card"><h4>4. Operational Plan</h4><div class="bp-body"><p><b>Tech-First Infrastructure:</b> Operations rely on intelligent process automation bots to handle third-party delivery EDI and streamline client support workflows. This minimizes human error in order routing and enables seamless integration with secondary virtual dark-kitchen brands.</p></div></div></div>"""
+    
+    st.markdown(bp_css + strategy_html, unsafe_allow_html=True)
+    
+    st.divider()
+    
+    # Financial Projections Summary
+    st.markdown("### 5. High-Level Financial Projections")
+    f1, f2, f3, f4 = st.columns(4)
+    f1.metric("Target Year 1 Revenue", "AED 4.2M", "Base + Delivery")
+    f2.metric("Target Gross Margin", "70%", "Optimized COGS")
+    f3.metric("Required OPEX Runway", "3 Months", "Crisis Buffer")
+    f4.metric("Breakeven Timeline", "Month 8", "Post-Launch")
+    
+    st.divider()
+    
+    # 90-Day Execution Timeline (No blank lines inside HTML)
+    st.markdown("### 6. 90-Day Execution Plan")
+    st.markdown("<p style='color: #E5E4E2;'>A rigorous launch timeline mapping out the synthetic sales data models into a finalized investor pitch and operational rollout.</p>", unsafe_allow_html=True)
+    
+    timeline_html = """<div class="timeline-container"><div class="timeline-step"><h5>Days 1 - 30: Prototyping & Capital Allocation</h5><div class="timeline-content"><b>Objectives:</b> Finalize the interactive dashboard prototype and synthesize the investor pitch. Secure the rolling credit facility for 3 months of OPEX. Initiate lease negotiations with dark-kitchen scalability clauses.</div></div><div class="timeline-step"><h5>Days 31 - 60: Tech Infrastructure & Automation</h5><div class="timeline-content"><b>Objectives:</b> Deploy process automation bots for inventory management and EDI integration with third-party delivery platforms. Conduct K-Means demographic testing on localized marketing channels.</div></div><div class="timeline-step"><h5>Days 61 - 90: Soft Launch & Model Calibration</h5><div class="timeline-content"><b>Objectives:</b> Execute localized soft launch targeting 'Value Regulars'. Activate Apriori-based upselling logic on digital menus. Calibrate price elasticity algorithms based on real-world customer acquisition costs (CAC) and conversion data prior to hard launch.</div></div></div>"""
+    
+    st.markdown(timeline_html, unsafe_allow_html=True)
