@@ -89,19 +89,31 @@ with tab1:
     st.divider()
     c1, c2 = st.columns(2)
     with c1:
-        fig_age = px.histogram(df, x="Age", nbins=15, title="Age Distribution", color_discrete_sequence=[TEAL], text_auto=True, template="plotly_dark")
-        st.plotly_chart(fig_age, use_container_width=True)
+        # Beautifully formatted Histogram in a bubble box
+        with st.container(border=True):
+            fig_age = px.histogram(df, x="Age", nbins=15, title="Age Distribution", color_discrete_sequence=[TEAL], text_auto=True, template="plotly_dark")
+            fig_age.update_traces(marker_line_width=1.5, marker_line_color=PLATINUM, textposition="outside", cliponaxis=False)
+            fig_age.update_layout(bargap=0.1, margin=dict(t=50, b=20, l=20, r=20))
+            st.plotly_chart(fig_age, use_container_width=True)
+            
     with c2:
-        area_counts = df['Area'].value_counts().reset_index()
-        area_counts.columns = ['Area', 'Count']
-        fig_area = px.bar(area_counts, x="Area", y="Count", title="Geographic Footprint", color_discrete_sequence=[GOLD], text_auto=True, template="plotly_dark")
-        st.plotly_chart(fig_area, use_container_width=True)
+        # Beautifully formatted Bar Chart in a bubble box
+        with st.container(border=True):
+            area_counts = df['Area'].value_counts().reset_index()
+            area_counts.columns = ['Area', 'Count']
+            fig_area = px.bar(area_counts, x="Area", y="Count", title="Geographic Footprint", color_discrete_sequence=[GOLD], text_auto=True, template="plotly_dark")
+            fig_area.update_traces(textposition="outside", cliponaxis=False)
+            fig_area.update_layout(margin=dict(t=50, b=20, l=20, r=20))
+            st.plotly_chart(fig_area, use_container_width=True)
 
-    cuisines_exploded = df['Cuisines_Enjoyed'].str.split(', ').explode().value_counts().reset_index()
-    cuisines_exploded.columns = ['Cuisine', 'Count']
-    fig_cuisine = px.bar(cuisines_exploded, x="Count", y="Cuisine", orientation='h', title="Most Requested Culinary Influences", color_discrete_sequence=[COPPER], text_auto=True, template="plotly_dark")
-    fig_cuisine.update_layout(yaxis={'categoryorder':'total ascending'})
-    st.plotly_chart(fig_cuisine, use_container_width=True)
+    # Horizontal Bar Chart in a bubble box
+    with st.container(border=True):
+        cuisines_exploded = df['Cuisines_Enjoyed'].str.split(', ').explode().value_counts().reset_index()
+        cuisines_exploded.columns = ['Cuisine', 'Count']
+        fig_cuisine = px.bar(cuisines_exploded, x="Count", y="Cuisine", orientation='h', title="Most Requested Culinary Influences", color_discrete_sequence=[COPPER], text_auto=True, template="plotly_dark")
+        fig_cuisine.update_traces(textposition="outside", cliponaxis=False)
+        fig_cuisine.update_layout(yaxis={'categoryorder':'total ascending'}, margin=dict(t=50, b=20, l=20, r=20))
+        st.plotly_chart(fig_cuisine, use_container_width=True)
 
 # =========================================================
 # TAB 2: Machine Learning & Persona Mining
@@ -116,13 +128,15 @@ with tab2:
     df.loc[X.index, 'Cluster'] = kmeans.fit_predict(X_scaled)
     df['Cluster_Name'] = df['Cluster'].map({0: 'Value Regulars', 1: 'High-Roller Foodies', 2: 'Infrequent Explorers'})
     
-    fig_cluster = px.scatter_3d(df, x='Age', y='Spend (AED)', z='Visit_Freq_Monthly', color='Cluster_Name', color_discrete_sequence=[GOLD, TEAL, PLATINUM], title="3D Behavioral Topography", template="plotly_dark", opacity=0.7)
-    st.plotly_chart(fig_cluster, use_container_width=True)
+    # 3D Scatter in a bubble box
+    with st.container(border=True):
+        fig_cluster = px.scatter_3d(df, x='Age', y='Spend (AED)', z='Visit_Freq_Monthly', color='Cluster_Name', color_discrete_sequence=[GOLD, TEAL, PLATINUM], title="3D Behavioral Topography", template="plotly_dark", opacity=0.7)
+        fig_cluster.update_layout(margin=dict(t=50, b=20, l=20, r=20))
+        st.plotly_chart(fig_cluster, use_container_width=True)
     
     st.markdown("#### Persona Synthesis")
     cluster_means = df.groupby('Cluster_Name')[features].mean()
     
-    # Error-Proof Inline HTML for Personas
     p_html = f"""<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">"""
     for c_name, row in cluster_means.iterrows():
         if c_name == 'Value Regulars':
@@ -159,9 +173,11 @@ with tab3:
     col_b.metric("Projected Monthly Revenue", f"AED {new_revenue:,.0f}", f"{revenue_delta:,.0f} AED")
     col_c.metric("Projected Visit Drop-off", f"{abs(scaled_drop_off)*100:.1f}%", delta_color="inverse")
     
-    fig_waterfall = go.Figure(go.Waterfall(name="Revenue Impact", orientation="v", measure=["absolute", "relative", "relative", "total"], x=["Base Revenue", "Price Increase Gain", "Volume Loss", "Adjusted Revenue"], y=[base_revenue, total_monthly_visits * base_avg_spend * (price_increase/100), new_revenue - (base_revenue * (1+(price_increase/100))), new_revenue], connector={"line": {"color": "rgb(63, 63, 63)"}}, increasing={"marker": {"color": GOLD}}, decreasing={"marker": {"color": COPPER}}, totals={"marker": {"color": TEAL}}))
-    fig_waterfall.update_layout(title="Net Revenue Waterfall Analysis", template="plotly_dark")
-    st.plotly_chart(fig_waterfall, use_container_width=True)
+    # Waterfall Chart in a bubble box
+    with st.container(border=True):
+        fig_waterfall = go.Figure(go.Waterfall(name="Revenue Impact", orientation="v", measure=["absolute", "relative", "relative", "total"], x=["Base Revenue", "Price Increase Gain", "Volume Loss", "Adjusted Revenue"], y=[base_revenue, total_monthly_visits * base_avg_spend * (price_increase/100), new_revenue - (base_revenue * (1+(price_increase/100))), new_revenue], connector={"line": {"color": "rgb(63, 63, 63)"}}, increasing={"marker": {"color": GOLD}}, decreasing={"marker": {"color": COPPER}}, totals={"marker": {"color": TEAL}}))
+        fig_waterfall.update_layout(title="Net Revenue Waterfall Analysis", template="plotly_dark", margin=dict(t=50, b=20, l=20, r=20))
+        st.plotly_chart(fig_waterfall, use_container_width=True)
 
 # =========================================================
 # TAB 4: Pandemic Stress-Test (6-Month Crisis Model)
@@ -195,11 +211,12 @@ with tab4:
     delivery_margin_per_order = BASE_AOV * (1 - cogs_pct - (del_fee / 100.0))
     bep_delivery_orders = FIXED_COSTS / delivery_margin_per_order if delivery_margin_per_order > 0 else float('inf')
     
-    fig_cf = go.Figure(go.Waterfall(name="Cash Flow", orientation="v", measure=["relative", "relative", "relative", "relative", "total"], x=["New Dine-In Rev", "Net Delivery Rev", "Fixed Costs", "Variable Costs (COGS)", "Net Monthly Cash Flow"], y=[new_dine_in_rev, net_delivery_rev, -FIXED_COSTS, -variable_costs, -monthly_burn], connector={"line": {"color": PLATINUM}}, increasing={"marker": {"color": TEAL}}, decreasing={"marker": {"color": COPPER}}, totals={"marker": {"color": GOLD if monthly_burn <= 0 else "#8B0000"}}))
-    fig_cf.update_layout(template="plotly_dark")
-    st.plotly_chart(fig_cf, use_container_width=True)
+    # Crisis Waterfall Chart in a bubble box
+    with st.container(border=True):
+        fig_cf = go.Figure(go.Waterfall(name="Cash Flow", orientation="v", measure=["relative", "relative", "relative", "relative", "total"], x=["New Dine-In Rev", "Net Delivery Rev", "Fixed Costs", "Variable Costs (COGS)", "Net Monthly Cash Flow"], y=[new_dine_in_rev, net_delivery_rev, -FIXED_COSTS, -variable_costs, -monthly_burn], connector={"line": {"color": PLATINUM}}, increasing={"marker": {"color": TEAL}}, decreasing={"marker": {"color": COPPER}}, totals={"marker": {"color": GOLD if monthly_burn <= 0 else "#8B0000"}}))
+        fig_cf.update_layout(title="Monthly Crisis Cash Flow", template="plotly_dark", margin=dict(t=50, b=20, l=20, r=20))
+        st.plotly_chart(fig_cf, use_container_width=True)
 
-    # --- ERROR-PROOF INLINE HTML FOR CRISIS CARDS (Matches Image) ---
     st.markdown("### STRATEGIC CONTINGENCY IMPERATIVES 🔗")
     
     crisis_html = f"""
@@ -244,14 +261,12 @@ with tab4:
 with tab5:
     st.subheader("Enterprise Blueprint & Investor Pitch")
     
-    # Financial Projections Metric Row
     f1, f2, f3, f4 = st.columns(4)
     f1.metric("Target Year 1 Revenue", "AED 4.2M", "Base + Delivery")
     f2.metric("Target Gross Margin", "70%", "Optimized COGS")
     f3.metric("Required OPEX Runway", "3 Months", "Crisis Buffer")
     f4.metric("Breakeven Timeline", "Month 8", "Post-Launch")
     
-    # Error-Proof Inline HTML for Business Plan Cards
     bp_html = f"""
     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px; margin-top:25px;">
         <div style="background:#111; border-left:4px solid {GOLD}; padding:20px; border-radius:8px;">
