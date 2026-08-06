@@ -438,12 +438,7 @@ with tab_ai:
                 for r in result["recommendations"]:
                     pairing_html = f'<p class="ticket-pairing">Pairs well: {r["pairing"]}</p>' if r.get("pairing") else ""
                     
-                    # Flush the HTML to the left to prevent Markdown code-block rendering
-                    st.markdown(f"""
-<div class="ticket">
-    <h3>{r['name']} &nbsp; <span class="ticket-price">AED {r['price_aed']}</span></h3>
-    <p class="ticket-reason">{r['reason']}</p>
-    {pairing_html}
-    <p class="ticket-source">Curated pick</p>
-</div>
-""", unsafe_allow_html=True)
+                    # Collapse all HTML onto a single line to completely bypass Markdown formatting
+                    html_content = f'<div class="ticket"><h3>{r["name"]} &nbsp; <span class="ticket-price">AED {r["price_aed"]}</span></h3><p class="ticket-reason">{r["reason"]}</p>{pairing_html}<p class="ticket-source">Curated pick</p></div>'
+                    
+                    st.markdown(html_content, unsafe_allow_html=True)
