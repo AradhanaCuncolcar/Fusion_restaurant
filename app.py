@@ -490,17 +490,6 @@ with tab_ai:
                 "notes": notes or None,
             }
 
-            if submitted:
-            prefs = {
-                "occasion": occasion,
-                "adventurousness": adventurousness,
-                "spice_tolerance": spice_tolerance,
-                "budget_pref": budget_pref,
-                "dietary": dietary,
-                "favorite_cuisines": favorite_cuisines,
-                "notes": notes or None,
-            }
-
             with st.spinner("Plating your curated recommendations..."):
                 # Call the local fallback function directly instead of the AI
                 result = recommend_fallback(prefs)
