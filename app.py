@@ -490,12 +490,20 @@ with tab_ai:
                 "notes": notes or None,
             }
 
-            with st.spinner("Plating your recommendations..."):
-                try:
-                    result = call_claude(prefs)
-                except Exception as e:
-                    st.warning(f"AI concierge unavailable ({e}); showing curated picks instead.")
-                    result = recommend_fallback(prefs)
+            if submitted:
+            prefs = {
+                "occasion": occasion,
+                "adventurousness": adventurousness,
+                "spice_tolerance": spice_tolerance,
+                "budget_pref": budget_pref,
+                "dietary": dietary,
+                "favorite_cuisines": favorite_cuisines,
+                "notes": notes or None,
+            }
+
+            with st.spinner("Plating your curated recommendations..."):
+                # Call the local fallback function directly instead of the AI
+                result = recommend_fallback(prefs)
 
             st.markdown(f'<p class="concierge-note">{result["concierge_note"]}</p>', unsafe_allow_html=True)
             for r in result["recommendations"]:
@@ -505,6 +513,6 @@ with tab_ai:
                     <h3>{r['name']} &nbsp; <span class="ticket-price">AED {r['price_aed']}</span></h3>
                     <p class="ticket-reason">{r['reason']}</p>
                     {pairing_html}
-                    <p class="ticket-source">{"AI concierge pick" if result["source"] == "ai" else "Curated pick"}</p>
+                    <p class="ticket-source">Curated pick</p>
                 </div>
                 """, unsafe_allow_html=True)
